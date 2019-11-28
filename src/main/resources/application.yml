@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: calendar-server
+  datasource:
+    url: ${MYSQL_URI:jdbc:mysql://localhost:3306/calendar?useSSL=false&autoreconnect=true}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:welcome}
+    testOnBorrow: true
+    testWhileIdle: true
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    validationQuery: SELECT 1
+    max-active: 15
+    max-idle: 10
+    max-wait: 8000
+  oauth2:
+    resource:
+      filter-order: 3
+      jwt:
+        key-value: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr0YyobP1qSAbRQnlo1PY
+          p2ffUgYvHPJxwXwxdFnNU/q3fHIG7/FL/rMXSbqJiJmoWVRk0C68mJ0o+XV/QBc+
+          8jRuhcztnF2qEcUE+SWjNgajEH60BMBCEbVQz14QR6qLubWRe2QfB96yNjMikHsk
+          a3L6tngJNxIQxXNx5JIlsaoQflpyeHKYX02UrV9xbOAplB2hjSRd8dktgjOncf2y
+          Zxc4auY+F7PG8hQVj141HnUZ3+1Lw2MJQDo04Qr+KLtdmRJy82zQgG4gXwpbP3gc
+          Qlcbyo1Fi+l0LPmyYJwGcOL6gzMpKdxIUxlQzMCjKT85OVEGcjXloZGm04+pYLQm
+          RQIDAQAB
+          -----END PUBLIC KEY-----
