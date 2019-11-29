@@ -1,5 +1,6 @@
 package com.auzmor.calendar.controllers;
 
+import com.auzmor.calendar.models.Event;
 import com.auzmor.calendar.services.CalendarService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -19,13 +20,13 @@ public class CalendarController extends Controller {
   @Autowired
   CalendarService calendarService;
 
-  @ApiOperation(value = "Create a new Event.",  response = List.class)
-  @RequestMapping(value = "/candidate", method = RequestMethod.POST)
+  @ApiOperation(value = "Create a new Event.")
+  @RequestMapping(value = "/event", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.CREATED)
  // @PreAuthorize("@customSecurityService.hasPermission(authentication, '" + PermissionConstant.ADMIN_PERMISSION + "', '" + PermissionConstant.CREATE_CANDIDATE_PERMISSION + "')")
-  public ResponseEntity<List> create()
+  public ResponseEntity<Event> create()
     throws Exception {
-    return new ResponseEntity<List>(calendarService.create(),
+    return new ResponseEntity<Event>(calendarService.saveEvent(),
       HttpStatus.CREATED);
   }
 }
