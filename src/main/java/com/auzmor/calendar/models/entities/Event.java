@@ -11,14 +11,14 @@ import springfox.documentation.spring.web.json.Json;
 public class Event extends Entity{
 
   private Integer id;
-  private String eventId;
+  private String objectId;
   private String calendarId;
   private String accountId;
   private Json calendarDetails;
 
-  public Event(String eventId, String calendarId, String accountId, Json calendarDetails, String uuid) {
+  public Event(String objectId, String calendarId, String accountId, Json calendarDetails, String uuid) {
     super(uuid);
-    this.eventId=eventId;
+    this.objectId=objectId;
     this.calendarId=calendarId;
     this.accountId=accountId;
     this.calendarDetails=calendarDetails;
