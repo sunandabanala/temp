@@ -6,14 +6,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
 @Getter
 @Setter
 @ApiModel(description="Request object to create a new Event.")
-public class EventCreateRequest {
+public class EventUpdateRequest {
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   @NotNull(message = "Title cannot be null.")

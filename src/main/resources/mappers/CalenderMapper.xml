@@ -5,8 +5,13 @@
 <mapper namespace='com.auzmor.calendar.mappers.CalendarMapper'>
 
     <insert id="saveEvent" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO calendar_details(uuid, eventId, calendarId, calendar_details, accountId)
-        VALUES(#{event.uuid}, #{event.eventId}, #{event.calendarId}, #{event.calendar_details}, #{event.accountId});
+        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type)
+        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType});
     </insert>
+
+    <update id='updateEvent' parameterType='String'>
+        UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details=#{calendarData}
+        where object_id=#{id}
+    </update>
 
 </mapper>

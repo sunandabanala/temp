@@ -1,4 +1,4 @@
-package com.auzmor.calendar.models;
+package com.auzmor.calendar.models.entities;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,5 +1,5 @@
 package com.auzmor.calendar.models.entities.metadata;
 
-public enum eventType {
-
+public enum ObjectType implements Data{
+  EVENT,
 }
