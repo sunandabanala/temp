@@ -37,10 +37,6 @@ pipeline {
     }
     stage('Build') {
         steps {
-            script {
-                version="integration-${env.BUILD_NUMBER}"
-                imageTag="${env.project_id}/${env.artifact}:${version}"
-            }
             container('docker') {
                  script {
                     withDockerRegistry(credentialsId: 'harbor-registry', url: 'https://harbor.cicd.auzmor.com') {
