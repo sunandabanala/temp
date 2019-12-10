@@ -10,7 +10,7 @@ import springfox.documentation.spring.web.json.Json;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Event extends Entity {
+public class Event extends com.auzmor.calendar.models.entities.Entity {
 
   private Integer id;
   private String objectId;
