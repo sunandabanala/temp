@@ -39,10 +39,11 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
       final String country = map.get("country") != null ? map.get("country").toString() : null;
       final String mobile = map.get("mobile") != null ? map.get("mobile").toString() : null;
       final String type = map.get("type") != null ? map.get("type").toString() : null;
+      final String token = map.get("nylasToken") != null ? map.get("nylasToken").toString() : null;
       return new UsernamePasswordAuthenticationToken(
         new CustomPrincipal(uuid, firstName, lastName, email, country, mobile, type,
           getCustomOrganization((Map<String, ?>)map.get("organization")),
-          getRoles((List<Map<String, ?>>) map.get("roles"))
+          getRoles((List<Map<String, ?>>) map.get("roles")),null
         ), null,
         getAuthorities(map)
       );

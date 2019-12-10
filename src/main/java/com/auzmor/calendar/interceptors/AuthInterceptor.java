@@ -2,6 +2,7 @@ package com.auzmor.calendar.interceptors;
 
 import com.auzmor.calendar.configurations.auth.CustomPrincipal;
 import com.auzmor.calendar.exceptions.DBException;
+import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.services.ApplicationContextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,9 @@ public class AuthInterceptor implements HandlerInterceptor {
   @Autowired
   private ApplicationContextService applicationContextService;
 
+  @Autowired
+  CalendarMapper calendarMapper;
+
   @Override
   public boolean preHandle(HttpServletRequest request,
                            HttpServletResponse response, Object object) throws DBException {
@@ -29,7 +33,15 @@ public class AuthInterceptor implements HandlerInterceptor {
     OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
     CustomPrincipal customPrincipal = (CustomPrincipal) oAuth2Authentication.getUserAuthentication().getPrincipal();
     final String email = customPrincipal.getEmail();
+    final String nylasToken  = customPrincipal.getNylasToken();
+    if(nylasToken != null) {
+      applicationContextService.setToken(nylasToken);
+    }else{
+      String token = calendarMapper.getToken(email);
+      applicationContextService.setToken(token);
+    }
     applicationContextService.setCurrentUserEmail(email);
+
     return true;
   }
 }

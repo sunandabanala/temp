@@ -27,4 +27,11 @@
         where event_id=#{id} and is_deleted=0;
     </select>
 
+    <select id='getToken' parameterType='String' resultType="String">
+        SELECT
+        nylas_token
+        FROM user_account
+        where username=#{email} and is_deleted=0;
+    </select>
+
 </mapper>
