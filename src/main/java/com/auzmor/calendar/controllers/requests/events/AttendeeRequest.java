@@ -13,11 +13,11 @@ import javax.validation.constraints.NotNull;
 public class AttendeeRequest {
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
+  @NotNull(message = "abc@auzmor.com")
   private String email;
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
+  @NotNull(message = "12345678912345678912345678912345")
   private String id;
 
 }

@@ -18,38 +18,42 @@ public class EventUpdateRequest {
   @NotNull(message = "Title cannot be null.")
   private String title;
 
-  @ApiModelProperty(notes="Title of event", required = true, example = "abc@auzmor.com")
+  @ApiModelProperty(notes="external Title of event", required = true, example = "StandUp")
   @NotNull(message = "Title cannot be null.")
-  private String username;
+  private String externalTitle;
 
-  @ApiModelProperty(notes="Start time/date of the event.", required = true, example = "2018-12-17T16:58:03.209657+05:30[Asia/Kolkata]")
+  @ApiModelProperty(notes="Start time/date of the event.", required = true, example = "2019-12-17T16:58:03.209657+05:30[Asia/Kolkata]")
   @NotNull(message = "start date/time cannot be null.")
   //TODO add custom validators to ZonedDateTime
   private String start;
 
-  @ApiModelProperty(notes="End time/date of the event.", required = true, example = "2018-12-17T16:58:03.209657+05:30[Asia/Kolkata]")
+  @ApiModelProperty(notes="End time/date of the event.", required = true, example = "2019-12-17T16:58:03.209657+05:30[Asia/Kolkata]")
   @NotNull(message = "end date/time cannot be null.")
   private String end;
 
-  @ApiModelProperty(notes="All invitees for this event", example = "[abc@gmail.com]")
+  @ApiModelProperty(notes="All invitees for this event", example = "[    {\n" +
+    "      \"email\" : \"abc@auzmor.com\",\n" +
+    "      \"id\": \"afa418e740cb4c2fbe7123e210cf8680\"\n" +
+    "    },\n" +
+    "    {\n" +
+    "      \"email\" : \"abc@gmail.com\""+
+    "    }]")
   private Set<AttendeeRequest> inviteeIds;
+
+  @ApiModelProperty(notes="All guests for this event", example = "[\"abcd@auzmor.com\"]")
+  private Set<String> guestEmails;
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String description;
 
+  @ApiModelProperty(notes="externalDescription of event", required = true, example = "StandUp")
+  private String externalDescription;
+
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String location;
 
-  @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
-  private String type;
-
-  @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  private String url;
-
   public long getStart() {
     return ZonedDateTime.parse(this.start).toInstant().getEpochSecond();
-
   }
 
   public long getEnd() {

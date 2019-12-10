@@ -1,5 +1,6 @@
 package com.auzmor.calendar.models.entities;
 
+import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,14 +18,18 @@ public class Event extends Entity {
   private String accountId;
   private String calendarDetails;
   private ObjectType objectType;
+  private String eventId;
+  private EventType eventType;
 
-  public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType) {
+  public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType, String eventId, EventType eventType) {
     super(uuid);
     this.objectId=objectId;
     this.calendarId=calendarId;
     this.accountId=accountId;
     this.calendarDetails=calendarDetails;
     this.objectType = objectType;
+    this.eventId = eventId;
+    this.eventType=eventType;
   }
 
 }

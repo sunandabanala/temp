@@ -5,13 +5,26 @@
 <mapper namespace='com.auzmor.calendar.mappers.CalendarMapper'>
 
     <insert id="saveEvent" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type)
-        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType});
+        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type)
+        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType});
     </insert>
 
     <update id='updateEvent' parameterType='String'>
         UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details=#{calendarData}
         where object_id=#{id}
     </update>
+
+    <update id='deleteEvent' parameterType='String'>
+        UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, is_deleted=1
+        where event_id=#{id}
+    </update>
+
+    <select id='getCalendarIds' parameterType='String' resultType='java.util.HashMap'>
+        SELECT
+        event_type,
+        object_id
+        FROM calendar_details
+        where event_id=#{id} and is_deleted=0;
+    </select>
 
 </mapper>

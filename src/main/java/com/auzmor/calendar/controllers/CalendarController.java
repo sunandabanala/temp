@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -29,10 +28,10 @@ public class CalendarController extends Controller {
   @RequestMapping(value = "/event", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.CREATED)
  // @PreAuthorize("@customSecurityService.hasPermission(authentication, '" + PermissionConstant.ADMIN_PERMISSION + "', '" + PermissionConstant.CREATE_CANDIDATE_PERMISSION + "')")
-  public ResponseEntity<Event> create(@Valid @RequestBody EventCreateRequest request)
+  public ResponseEntity<Object> create(@Valid @RequestBody EventCreateRequest request)
     throws Exception {
-    return new ResponseEntity<>(calendarService.saveEvent(request.getTitle(), request.getUsername(), request.getStart(), request.getEnd(), request.getInviteeIds(), request.getDescription(),
-      request.getLocation(), request.getType(), request.getUrl()),
+    return new ResponseEntity<>(calendarService.saveEvent(request.getEventId(), request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(),
+      request.getExternalDescription(), request.getLocation()),
       HttpStatus.CREATED);
   }
 
@@ -40,11 +39,11 @@ public class CalendarController extends Controller {
   @RequestMapping(value = "/event/{id}", method = RequestMethod.PUT)
   @ResponseStatus(HttpStatus.OK)
   // @PreAuthorize("@customSecurityService.hasPermission(authentication, '" + PermissionConstant.ADMIN_PERMISSION + "', '" + PermissionConstant.CREATE_CANDIDATE_PERMISSION + "')")
-  public ResponseEntity<Event> update(@PathVariable("id") final String id,
+  public ResponseEntity<Object> update(@PathVariable("id") final String id,
                                       @RequestBody @Valid EventUpdateRequest request)
     throws Exception {
-    return new ResponseEntity<>(calendarService.updateEvent(id, request.getTitle(), request.getUsername(), request.getStart(), request.getEnd(), request.getInviteeIds(), request.getDescription(),
-      request.getLocation(), request.getType(), request.getUrl()),
+    return new ResponseEntity<>(calendarService.updateEvent(id, request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(), request.getExternalDescription(),
+      request.getLocation()),
       HttpStatus.OK);
   }
 
