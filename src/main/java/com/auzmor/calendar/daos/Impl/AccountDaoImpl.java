@@ -2,7 +2,7 @@ package com.auzmor.calendar.daos.Impl;
 
 import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.mappers.AccountMapper;
-import com.auzmor.calendar.models.Account;
+import com.auzmor.calendar.models.UserAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ public class AccountDaoImpl implements AccountDao {
   private AccountMapper accountMapper;
 
   @Override
-  public Account getAccount(String nylasAccountId) {
+  public UserAccount getAccount(String nylasAccountId) {
     return accountMapper.getAccount(nylasAccountId);
   }
 
@@ -21,4 +21,10 @@ public class AccountDaoImpl implements AccountDao {
   public void updateAccount(String nylasAccountId, String cursorId) {
     accountMapper.updateAccount(nylasAccountId, cursorId);
   }
+
+  @Override
+  public void addNylasAccount(UserAccount userAccount) {
+    accountMapper.saveUserAccount(userAccount);
+  }
+
 }

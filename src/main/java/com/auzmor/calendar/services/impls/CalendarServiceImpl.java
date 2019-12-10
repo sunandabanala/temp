@@ -2,6 +2,7 @@ package com.auzmor.calendar.services.impls;
 
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.daos.CalendarDao;
+
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
@@ -22,7 +23,6 @@ import java.util.*;
 
 import static com.auzmor.calendar.constants.Constant.DEFAULT_EMAIL;
 
-
 @Service
 public class CalendarServiceImpl implements CalendarService {
 
@@ -31,8 +31,8 @@ public class CalendarServiceImpl implements CalendarService {
   @Autowired
   private ApplicationContextService applicationContextService;
 
-  String nylse_token = "ER0CqAMebIF4y4svQzPX7DRGBhl7mD:";
-  String nylse_token1 = "CAlWum2Gw39xpt1Y5BpyO6haH5YGwj:";
+  String nylas_token = "ER0CqAMebIF4y4svQzPX7DRGBhl7mD:";
+  String nylas_token1 = "CAlWum2Gw39xpt1Y5BpyO6haH5YGwj:";
   String recruiterName = "Pooja Gautam";
   String username = "pooja@auzmor.com";
   String default_username = "mandeep@kovalent.io";
@@ -49,8 +49,8 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylse_token);
-    String defaultToken = convertTokenToBase64(nylse_token1);
+    String organizerToken = convertTokenToBase64(nylas_token);
+    String defaultToken = convertTokenToBase64(nylas_token1);
 
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
@@ -158,8 +158,8 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylse_token);
-    String defaultToken = convertTokenToBase64(nylse_token1);
+    String organizerToken = convertTokenToBase64(nylas_token);
+    String defaultToken = convertTokenToBase64(nylas_token1);
 
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
@@ -206,7 +206,7 @@ public class CalendarServiceImpl implements CalendarService {
     emails.add(email);
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = nylse_token.getBytes();
+    byte[] plainCredsBytes = nylas_token.getBytes();
     byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
     String base64Creds = new String(base64CredsBytes);
     headers.add("Authorization", "Basic " + base64Creds);
@@ -241,8 +241,8 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylse_token);
-    String defaultToken = convertTokenToBase64(nylse_token1);
+    String organizerToken = convertTokenToBase64(nylas_token);
+    String defaultToken = convertTokenToBase64(nylas_token1);
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     HttpEntity<String> request = new HttpEntity<String>(null,headers);
@@ -251,6 +251,11 @@ public class CalendarServiceImpl implements CalendarService {
     ResponseEntity response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, String.class);
     ResponseEntity externalResponse = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
     calendarDao.deleteEvent(id);
+    byte[] plainCredsBytes = nylas_token.getBytes();
+    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
+    String base64Creds = new String(base64CredsBytes);
+    headers.add("Authorization", "Basic " + base64Creds);
+    restTemplate.delete(url, headers);
   }
 
 }
