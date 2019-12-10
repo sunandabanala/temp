@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+    'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='com.auzmor.calendar.mappers.AccountMapper'>
+
+  <select id="getAccount" parameterType="String" resultType='com.auzmor.calendar.models.Account'>
+    SELECT uuid, username, provider_name as providerName,
+    refresh_token as refreshToken, nylas_token as nylasToken, nylas_account_id AS nylasAccountId, cursor_id AS cursorId
+    from user_account where nylas_account_id = #{accountId}
+  </select>
+
+  <update id='updateAccount' parameterType='String'>
+    UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
+    where nylas_account_id=#{accountId}
+  </update>
+
+</mapper>
