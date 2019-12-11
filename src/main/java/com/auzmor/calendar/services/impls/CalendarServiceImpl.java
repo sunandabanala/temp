@@ -82,7 +82,7 @@ public class CalendarServiceImpl implements CalendarService {
     String calendarData = String.valueOf(root);
 
     ObjectMapper candidateMapper = new ObjectMapper();
-    JsonNode candidateRoot = mapper.readTree(candidateResponse.getBody());
+    JsonNode candidateRoot = candidateMapper.readTree(candidateResponse.getBody());
     String candidateEventData = String.valueOf(candidateRoot);
 
     if(defaultToken.equals(organizerToken)) {
@@ -220,7 +220,7 @@ public class CalendarServiceImpl implements CalendarService {
     String internalEventData = String.valueOf(root);
 
     ObjectMapper candidateMapper = new ObjectMapper();
-    JsonNode candidateRoot = mapper.readTree(internalResponse.getBody());
+    JsonNode candidateRoot = candidateMapper.readTree(internalResponse.getBody());
     String externalEventData = String.valueOf(candidateRoot);
 
     if(defaultToken.equals(organizerToken)) {
