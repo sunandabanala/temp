@@ -39,6 +39,8 @@ public class CalendarServiceImpl implements CalendarService {
                          String externalDescription, String location) throws JSONException, IOException {
 
     String username = applicationContextService.getCurrentUserEmail();
+    username = "pooja@auzmor.com";
+    String recruiterName = applicationContextService.getCurrentUsername();
     String nylasToken  = applicationContextService.geToken();
     String uuid = UUID.randomUUID().toString().replace("-", "");
     String candidateUUID = UUID.randomUUID().toString().replace("-", "");
@@ -62,7 +64,7 @@ public class CalendarServiceImpl implements CalendarService {
 
     Map<String, Object> dummyRecruiter = new HashMap();
     dummyRecruiter.put("email", DEFAULT_EMAIL);
-    dummyRecruiter.put("name", username);
+    dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
@@ -148,6 +150,8 @@ public class CalendarServiceImpl implements CalendarService {
   public Object updateEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                            String externalDescription, String location) throws JSONException, IOException {
     String username = applicationContextService.getCurrentUserEmail();
+    String recruiterName = applicationContextService.getCurrentUsername();
+    username = "pooja@auzmor.com";
     String nylasToken  = applicationContextService.geToken();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
     String externalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
@@ -173,7 +177,7 @@ public class CalendarServiceImpl implements CalendarService {
 
     Map<String, Object> dummyRecruiter = new HashMap();
     dummyRecruiter.put("email", DEFAULT_EMAIL);
-    dummyRecruiter.put("name", username);
+    dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
@@ -201,7 +205,6 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object checkAvailability(String email, long start, long end) throws IOException {
-    String username = applicationContextService.getCurrentUserEmail();
     String nylasToken  = applicationContextService.geToken();
     HttpHeaders headers = new HttpHeaders();
     Set<String> emails = new HashSet<>();
@@ -232,7 +235,6 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public void deleteEvent(String id) {
-    String username = applicationContextService.getCurrentUserEmail();
     String nylasToken  = applicationContextService.geToken();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(id);
     String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
@@ -248,10 +250,10 @@ public class CalendarServiceImpl implements CalendarService {
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     HttpEntity<String> request = new HttpEntity<String>(null,headers);
-    HttpEntity<String> externalRequest = new HttpEntity<String>(null,headers);
+    HttpEntity<String> externalRequest = new HttpEntity<String>(null,httpHeaders);
 
     ResponseEntity response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, String.class);
-    ResponseEntity externalResponse = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
+    ResponseEntity externalResponse = restTemplate.exchange(externalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
     calendarDao.deleteEvent(id);
   }
 

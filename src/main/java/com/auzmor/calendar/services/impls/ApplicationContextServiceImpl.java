@@ -7,6 +7,7 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
 
   private String email;
   private String token;
+  private String username;
 
   @Override
   public String getCurrentUserEmail() {
@@ -16,6 +17,16 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   @Override
   public void setCurrentUserEmail(String email) {
     this.email=email;
+  }
+
+  @Override
+  public String getCurrentUsername() {
+    return this.username;
+  }
+
+  @Override
+  public void setCurrentUsername(String name) {
+    this.username=name;
   }
 
   @Override

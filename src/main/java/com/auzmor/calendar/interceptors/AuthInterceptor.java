@@ -34,6 +34,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     CustomPrincipal customPrincipal = (CustomPrincipal) oAuth2Authentication.getUserAuthentication().getPrincipal();
     final String email = customPrincipal.getEmail();
     final String nylasToken  = customPrincipal.getNylasToken();
+    final String username = customPrincipal.getFirstName()+" "+customPrincipal.getLastName();
     if(nylasToken != null) {
       applicationContextService.setToken(nylasToken);
     }else{
@@ -41,6 +42,7 @@ public class AuthInterceptor implements HandlerInterceptor {
       applicationContextService.setToken(token);
     }
     applicationContextService.setCurrentUserEmail(email);
+    applicationContextService.setCurrentUsername(username);
 
     return true;
   }
