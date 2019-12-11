@@ -1,10 +1,9 @@
 package com.auzmor.calendar.services.impls;
 
-import com.auzmor.calendar.constants.NylasApiConstants;
 import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.daos.WebhookDao;
-import com.auzmor.calendar.models.Account;
+import com.auzmor.calendar.models.UserAccount;
 import com.auzmor.calendar.services.WebhookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -25,7 +24,7 @@ public class WebhookServiceImpl implements WebhookService {
 
   @Override
   public void handleWebhook(String date, String objectId, String eventType, String object, String accountId) throws Exception {
-    Account account = accountDao.getAccount(accountId);
+    UserAccount account = accountDao.getAccount(accountId);
     String cursorId = account.getCursorId();
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();

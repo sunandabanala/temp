@@ -13,35 +13,36 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.ws.rs.DELETE;
 import java.io.IOException;
 import java.util.*;
 
-import static com.auzmor.calendar.constants.Constant.DEFAULT_EMAIL;
-import static com.auzmor.calendar.constants.Constant.DEFAULT_EMAIL_NYLAS_TOKEN;
 import static com.auzmor.calendar.constants.NylasApiConstants.*;
-
 
 @Service
 public class CalendarServiceImpl implements CalendarService {
 
+
+  @Value("${default_email}")
+  private String defaultEmail;
   @Autowired
   CalendarDao calendarDao;
   @Autowired
   private ApplicationContextService applicationContextService;
 
+
   @Override
   public Object saveEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                          String externalDescription, String location) throws JSONException, IOException {
 
+
     String username = applicationContextService.getCurrentUserEmail();
-    username = "pooja@auzmor.com";
+    String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
-    String nylasToken  = applicationContextService.geToken();
     String uuid = UUID.randomUUID().toString().replace("-", "");
     String candidateUUID = UUID.randomUUID().toString().replace("-", "");
     HttpHeaders headers = new HttpHeaders();
@@ -49,13 +50,13 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylasToken);
-    String defaultToken = convertTokenToBase64(DEFAULT_EMAIL_NYLAS_TOKEN);
+    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
+    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
 
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(DEFAULT_EMAIL, defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(defaultEmail, defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
@@ -63,7 +64,7 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     Map<String, Object> dummyRecruiter = new HashMap();
-    dummyRecruiter.put("email", DEFAULT_EMAIL);
+    dummyRecruiter.put("email", defaultEmail);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
@@ -84,12 +85,37 @@ public class CalendarServiceImpl implements CalendarService {
     JsonNode candidateRoot = mapper.readTree(candidateResponse.getBody());
     String candidateEventData = String.valueOf(candidateRoot);
 
+    if(defaultToken.equals(organizerToken)) {
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+    }else {
+      String organizaerCursorId= getCursorId(organizerToken);
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+    }
+
     Event event = new Event(root.get("id").asText(), organizer_calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL);
     Event candidateEvent = new Event(candidateRoot.get("id").asText(), default_calendar_Id, "abc", candidateEventData , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL);
     calendarDao.saveEvent(event,candidateEvent);
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
     return result;
+  }
+
+  String getCursorId(String token) throws IOException {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    RestTemplate restTemplate = new RestTemplate();
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    httpHeaders.add("Authorization", "Basic " + token);
+    HttpEntity<String> request = new HttpEntity<String>(null,httpHeaders);
+    ResponseEntity<String> response = restTemplate.postForEntity( FETCH_LATEST_CURSOR, request , String.class );
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode root = mapper.readTree(response.getBody());
+    String cursorId = null;
+    if(response.getStatusCodeValue() != 200) {
+      return cursorId;
+    }
+    return root.get("cursor").asText();
   }
 
   String convertTokenToBase64(String token) {
@@ -150,9 +176,8 @@ public class CalendarServiceImpl implements CalendarService {
   public Object updateEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                            String externalDescription, String location) throws JSONException, IOException {
     String username = applicationContextService.getCurrentUserEmail();
+    String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
-    username = "pooja@auzmor.com";
-    String nylasToken  = applicationContextService.geToken();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
     String externalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
     String internalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
@@ -162,13 +187,14 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylasToken);
-    String defaultToken = convertTokenToBase64(DEFAULT_EMAIL_NYLAS_TOKEN);
+    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
+    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
+
 
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(DEFAULT_EMAIL, defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(defaultEmail, defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
@@ -176,7 +202,7 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     Map<String, Object> dummyRecruiter = new HashMap();
-    dummyRecruiter.put("email", DEFAULT_EMAIL);
+    dummyRecruiter.put("email", defaultEmail);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
@@ -197,6 +223,15 @@ public class CalendarServiceImpl implements CalendarService {
     JsonNode candidateRoot = mapper.readTree(internalResponse.getBody());
     String externalEventData = String.valueOf(candidateRoot);
 
+    if(defaultToken.equals(organizerToken)) {
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+    }else {
+      String organizaerCursorId= getCursorId(organizerToken);
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+    }
+
     calendarDao.updateEvent(eventId, internalEventData, externalEventData);
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
@@ -205,14 +240,12 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object checkAvailability(String email, long start, long end) throws IOException {
-    String nylasToken  = applicationContextService.geToken();
     HttpHeaders headers = new HttpHeaders();
     Set<String> emails = new HashSet<>();
     emails.add(email);
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylasToken);
-
+    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
     headers.add("Authorization", "Basic " + organizerToken);
     Map<String, Object> m = new HashMap();
     JSONObject personJsonObject = new JSONObject();
@@ -234,8 +267,9 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   @Override
-  public void deleteEvent(String id) {
+  public void deleteEvent(String id) throws IOException {
     String nylasToken  = applicationContextService.geToken();
+    String userId = applicationContextService.getCurrentUserId();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(id);
     String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
     String internalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
@@ -245,8 +279,8 @@ public class CalendarServiceImpl implements CalendarService {
     RestTemplate restTemplate = new RestTemplate();
     headers.setContentType(MediaType.APPLICATION_JSON);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(nylasToken);
-    String defaultToken = convertTokenToBase64(DEFAULT_EMAIL_NYLAS_TOKEN);
+    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
+    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     HttpEntity<String> request = new HttpEntity<String>(null,headers);
@@ -254,6 +288,14 @@ public class CalendarServiceImpl implements CalendarService {
 
     ResponseEntity response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, String.class);
     ResponseEntity externalResponse = restTemplate.exchange(externalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
+    if(defaultToken.equals(organizerToken)) {
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+    }else {
+      String organizaerCursorId= getCursorId(organizerToken);
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+    }
     calendarDao.deleteEvent(id);
   }
 

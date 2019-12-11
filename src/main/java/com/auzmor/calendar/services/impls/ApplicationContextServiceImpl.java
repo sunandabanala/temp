@@ -8,6 +8,8 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   private String email;
   private String token;
   private String username;
+  private String currentUserId;
+  private String defaultToken;
 
   @Override
   public String getCurrentUserEmail() {
@@ -37,5 +39,25 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   @Override
   public void setToken(String token) {
     this.token=token;
+  }
+
+  @Override
+  public String getCurrentUserId() {
+    return this.currentUserId;
+  }
+
+  @Override
+  public void setCurrentUserId(String userId) {
+    this.currentUserId=userId;
+  }
+
+  @Override
+  public String getDefaultToken() {
+    return this.defaultToken;
+  }
+
+  @Override
+  public void setDefaultToken(String defaultToken) {
+    this.defaultToken=defaultToken;
   }
 }

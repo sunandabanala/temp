@@ -5,6 +5,7 @@ import com.auzmor.calendar.exceptions.DBException;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.services.ApplicationContextService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -16,6 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
+
+  @Value("${default_email}")
+  private String defaultEmail;
 
   @Autowired
   private ApplicationContextService applicationContextService;
@@ -35,14 +39,23 @@ public class AuthInterceptor implements HandlerInterceptor {
     final String email = customPrincipal.getEmail();
     final String nylasToken  = customPrincipal.getNylasToken();
     final String username = customPrincipal.getFirstName()+" "+customPrincipal.getLastName();
+    final String userId = customPrincipal.getUuid();
+    String defaultToken=calendarMapper.getTokenByEmail(defaultEmail);
     if(nylasToken != null) {
       applicationContextService.setToken(nylasToken);
     }else{
-      String token = calendarMapper.getToken(email);
+      String token = calendarMapper.getTokenByUserId(userId);
+      if(token == null) {
+        token = defaultToken;
+        applicationContextService.setCurrentUserEmail(defaultEmail);
+      }else{
+        applicationContextService.setCurrentUserEmail(email);
+      }
       applicationContextService.setToken(token);
     }
-    applicationContextService.setCurrentUserEmail(email);
     applicationContextService.setCurrentUsername(username);
+    applicationContextService.setCurrentUserId(userId);
+    applicationContextService.setDefaultToken(defaultToken);
 
     return true;
   }

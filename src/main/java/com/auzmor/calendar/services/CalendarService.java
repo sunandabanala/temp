@@ -1,7 +1,6 @@
 package com.auzmor.calendar.services;
 
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
-import com.auzmor.calendar.models.entities.Event;
 import org.json.JSONException;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +18,7 @@ public interface CalendarService {
 
   Object checkAvailability(String email, final long start, final long end) throws IOException;
 
-  void deleteEvent(final String id);
+  void deleteEvent(final String id) throws IOException;
+
 }
 

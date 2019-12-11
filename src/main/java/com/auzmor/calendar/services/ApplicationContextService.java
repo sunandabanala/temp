@@ -10,4 +10,8 @@ public interface ApplicationContextService {
   void setCurrentUsername(String name);
   String geToken();
   void setToken(String email);
+  String getCurrentUserId();
+  void setCurrentUserId(String userId);
+  String getDefaultToken();
+  void setDefaultToken(String defaultToken);
 }

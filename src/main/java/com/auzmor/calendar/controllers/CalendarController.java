@@ -3,7 +3,8 @@ package com.auzmor.calendar.controllers;
 import com.auzmor.calendar.controllers.requests.events.EventCreateRequest;
 import com.auzmor.calendar.controllers.requests.events.EventUpdateRequest;
 import com.auzmor.calendar.controllers.requests.events.SlotCheckRequest;
-import com.auzmor.calendar.models.entities.Event;
+import com.auzmor.calendar.models.UserAccount;
+import com.auzmor.calendar.services.AccountService;
 import com.auzmor.calendar.services.CalendarService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,6 +24,9 @@ public class CalendarController extends Controller {
 
   @Autowired
   CalendarService calendarService;
+
+  @Autowired
+  AccountService accountService;
 
   @ApiOperation(value = "Create a new Event.")
   @RequestMapping(value = "/event", method = RequestMethod.POST)
@@ -64,6 +68,15 @@ public class CalendarController extends Controller {
   public ResponseEntity<Object> delete(@PathVariable("id") final String id)
     throws Exception {
     calendarService.deleteEvent(id);
+    return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+  }
+
+  @ApiOperation(value = "Add nylasAccount ")
+  @RequestMapping(value = "/addNylasAccount/", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  // @PreAuthorize("@customSecurityService.hasPermission(authentication, '" + PermissionConstant.ADMIN_PERMISSION + "', '" + PermissionConstant.CREATE_CANDIDATE_PERMISSION + "')")
+  public ResponseEntity<Object> addNylasAccount(@RequestBody @Valid UserAccount account) throws Exception {
+    accountService.addNylasAccount(account);
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
 
