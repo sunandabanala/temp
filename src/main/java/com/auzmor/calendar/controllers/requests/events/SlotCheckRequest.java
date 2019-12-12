@@ -16,8 +16,8 @@ public class SlotCheckRequest {
   //TODO add custom validators to ZonedDateTime
   private String start;
 
-  @ApiModelProperty(notes="End time/date of the event.", required = true, example = "2018-12-17T16:30:00+05:30[Asia/Kolkata]")
-  @NotNull(message = "end date/time cannot be null.")
+  @ApiModelProperty(notes="email", required = true, example = "2018-12-17T16:30:00+05:30[Asia/Kolkata]")
+  @NotNull(message = "email cannot be null.")
   private String end;
 
   @ApiModelProperty(notes="End time/date of the event.", required = true, example = "abc@gmail.com")

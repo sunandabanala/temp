@@ -19,7 +19,7 @@ public class EventUpdateRequest {
   private String title;
 
   @ApiModelProperty(notes="external Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
+  @NotNull(message = "externalTitle cannot be null.")
   private String externalTitle;
 
   @ApiModelProperty(notes="Start time/date of the event.", required = true, example = "2019-12-17T16:58:03.209657+05:30[Asia/Kolkata]")

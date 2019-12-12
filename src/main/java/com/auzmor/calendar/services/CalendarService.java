@@ -18,7 +18,7 @@ public interface CalendarService {
 
   Object checkAvailability(String email, final long start, final long end) throws IOException;
 
-  void deleteEvent(final String id);
+  void deleteEvent(final String id) throws IOException;
 
 }
 

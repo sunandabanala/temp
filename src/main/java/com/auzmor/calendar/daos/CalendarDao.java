@@ -16,5 +16,7 @@ public interface CalendarDao {
 
   Map mapEvent(String id);
 
+  void updateCursorId(String cursorId, String defaultCursorId, String email, String userId);
+
 
 }
