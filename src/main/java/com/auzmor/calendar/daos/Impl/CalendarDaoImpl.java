@@ -50,10 +50,13 @@ public class CalendarDaoImpl implements CalendarDao {
 
   @Override
   public void updateCursorId(String cursorId, String defaultCursorId, String email, String userId) {
-
     calendarMapper.updateCursorIdByEmail(defaultCursorId, email);
-    if(cursorId != null)
+    if (cursorId != null)
       calendarMapper.updateCursorIdByUserId(cursorId, userId);
+  }
+
+  public void updateEvents(List<Map> events) {
+    calendarMapper.updateEvents(events);
   }
 
 }
