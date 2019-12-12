@@ -36,7 +36,6 @@ public class CalendarServiceImpl implements CalendarService {
   public Object saveEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                          String externalDescription, String location) throws JSONException, IOException {
 
-    System.out.println("default email..."+System.getenv("default_email"));
     String username = applicationContextService.getCurrentUserEmail();
     String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
@@ -53,7 +52,7 @@ public class CalendarServiceImpl implements CalendarService {
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(System.getenv("default_email"), defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(System.getenv("default_calendar_name"), defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
@@ -173,6 +172,7 @@ public class CalendarServiceImpl implements CalendarService {
   public Object updateEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                            String externalDescription, String location) throws JSONException, IOException {
     String username = applicationContextService.getCurrentUserEmail();
+    username="pooja@auzmor.com";
     String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
@@ -191,7 +191,7 @@ public class CalendarServiceImpl implements CalendarService {
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(System.getenv("default_email"), defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(System.getenv("default_calendar_name"), defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
