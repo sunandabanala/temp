@@ -26,9 +26,6 @@ import static com.auzmor.calendar.constants.NylasApiConstants.*;
 @Service
 public class CalendarServiceImpl implements CalendarService {
 
-
-  @Value("${default_email}")
-  private String defaultEmail;
   @Autowired
   CalendarDao calendarDao;
   @Autowired
@@ -39,7 +36,7 @@ public class CalendarServiceImpl implements CalendarService {
   public Object saveEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                          String externalDescription, String location) throws JSONException, IOException {
 
-
+    System.out.println("default email..."+System.getenv("default_email"));
     String username = applicationContextService.getCurrentUserEmail();
     String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
@@ -56,7 +53,7 @@ public class CalendarServiceImpl implements CalendarService {
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(defaultEmail, defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(System.getenv("default_email"), defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
@@ -64,7 +61,7 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     Map<String, Object> dummyRecruiter = new HashMap();
-    dummyRecruiter.put("email", defaultEmail);
+    dummyRecruiter.put("email", System.getenv("default_email"));
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
@@ -87,11 +84,11 @@ public class CalendarServiceImpl implements CalendarService {
 
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
     }else {
       String organizaerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
     }
 
     Event event = new Event(root.get("id").asText(), organizer_calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL);
@@ -194,7 +191,7 @@ public class CalendarServiceImpl implements CalendarService {
     headers.add("Authorization", "Basic " + organizerToken);
     httpHeaders.add("Authorization", "Basic " + defaultToken);
     String organizer_calendar_Id = getCalendarId(username, organizerToken, restTemplate);
-    String default_calendar_Id = getCalendarId(defaultEmail, defaultToken, restTemplate);
+    String default_calendar_Id = getCalendarId(System.getenv("default_email"), defaultToken, restTemplate);
 
     Set<String> attendeeEmailList = new HashSet<>();
     for(AttendeeRequest attendee:attendeeIds) {
@@ -202,7 +199,7 @@ public class CalendarServiceImpl implements CalendarService {
     }
 
     Map<String, Object> dummyRecruiter = new HashMap();
-    dummyRecruiter.put("email", defaultEmail);
+    dummyRecruiter.put("email", System.getenv("default_email"));
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
@@ -225,11 +222,11 @@ public class CalendarServiceImpl implements CalendarService {
 
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
     }else {
       String organizaerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
     }
 
     calendarDao.updateEvent(eventId, internalEventData, externalEventData);
@@ -290,11 +287,11 @@ public class CalendarServiceImpl implements CalendarService {
     ResponseEntity externalResponse = restTemplate.exchange(externalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, defaultEmail, null);
+      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
     }else {
       String organizaerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, defaultEmail, userId);
+      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
     }
     calendarDao.deleteEvent(id);
   }

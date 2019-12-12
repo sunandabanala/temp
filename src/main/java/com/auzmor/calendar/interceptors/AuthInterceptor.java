@@ -18,9 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
-  @Value("${default_email}")
-  private String defaultEmail;
-
   @Autowired
   private ApplicationContextService applicationContextService;
 
@@ -40,14 +37,14 @@ public class AuthInterceptor implements HandlerInterceptor {
     final String nylasToken  = customPrincipal.getNylasToken();
     final String username = customPrincipal.getFirstName()+" "+customPrincipal.getLastName();
     final String userId = customPrincipal.getUuid();
-    String defaultToken=calendarMapper.getTokenByEmail(defaultEmail);
+    String defaultToken=calendarMapper.getTokenByEmail(System.getenv("default_email"));
     if(nylasToken != null) {
       applicationContextService.setToken(nylasToken);
     }else{
       String token = calendarMapper.getTokenByUserId(userId);
       if(token == null) {
         token = defaultToken;
-        applicationContextService.setCurrentUserEmail(defaultEmail);
+        applicationContextService.setCurrentUserEmail(System.getenv("default_email"));
       }else{
         applicationContextService.setCurrentUserEmail(email);
       }
