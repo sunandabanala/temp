@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.auzmor.calendar.constants.Constant.DUMMY_EMAIL;
@@ -33,11 +35,12 @@ public class CalendarServiceImpl implements CalendarService {
 
 
   @Override
-  public Object saveEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
+  public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                          String externalDescription, String location) throws JSONException, IOException {
 
     String default_calendar_Id;
     String organizer_calendar_Id;
+    String timezone = getTimeZone(start);
     String userId = applicationContextService.getCurrentUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
     String uuid = UUID.randomUUID().toString().replace("-", "");
@@ -96,12 +99,18 @@ public class CalendarServiceImpl implements CalendarService {
       calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
     }
 
-    Event event = new Event(root.get("id").asText(), organizer_calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL);
-    Event candidateEvent = new Event(candidateRoot.get("id").asText(), default_calendar_Id, "abc", candidateEventData , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL);
+    Event event = new Event(root.get("id").asText(), organizer_calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
+    Event candidateEvent = new Event(candidateRoot.get("id").asText(), default_calendar_Id, "abc", candidateEventData , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
     calendarDao.saveEvent(event,candidateEvent);
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
     return result;
+  }
+
+  String getTimeZone(String start) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(start, DateTimeFormatter.ISO_DATE_TIME);
+    String timezone = TimeZone.getTimeZone(zonedDateTime.getZone().getId()).getID();
+    return timezone;
   }
 
   String getCursorId(String token) throws IOException {
@@ -128,9 +137,11 @@ public class CalendarServiceImpl implements CalendarService {
     return base64Creds;
   }
 
-  JSONObject calendardataJson(Set<String> participants, long start, long end, String calendar_Id, String title, String description, String location,
-                              Map<String, Object> dummyRecruiter)
-  {
+  JSONObject calendardataJson(Set<String> participants, String start, String end, String calendar_Id, String title, String description, String location,
+                              Map<String, Object> dummyRecruiter) {
+
+    long startTime = ZonedDateTime.parse(start).toInstant().getEpochSecond();
+    long endTime = ZonedDateTime.parse(end).toInstant().getEpochSecond();
     Map<String, Object> m = new HashMap();
     Map<String, Object> timeObject = new HashMap();
     Set<Map<String, Object>> participantsList = new HashSet<>();
@@ -142,8 +153,8 @@ public class CalendarServiceImpl implements CalendarService {
     if(dummyRecruiter != null) {
       participantsList.add(dummyRecruiter);
     }
-    timeObject.put("start_time", Long.toString(start));
-    timeObject.put("end_time", Long.toString(end));
+    timeObject.put("start_time", startTime);
+    timeObject.put("end_time", endTime);
     m.put("calendar_id", calendar_Id);
     m.put("title", title);
     m.put("when",timeObject);
@@ -176,7 +187,7 @@ public class CalendarServiceImpl implements CalendarService {
     return calendar_Id;
   }
 
-  public Object updateEvent(String eventId, String title, String externalTitle, long start, long end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
+  public Object updateEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                            String externalDescription, String location) throws JSONException, IOException {
     String default_calendar_Id;
     String organizer_calendar_Id;

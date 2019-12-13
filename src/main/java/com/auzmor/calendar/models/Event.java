@@ -22,8 +22,10 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
   private String eventId;
   private EventType eventType;
   private UserAccount account;
+  private String timezone;
 
-  public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType, String eventId, EventType eventType) {
+  public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType, String eventId
+               , EventType eventType, String timezone) {
     super(uuid);
     this.objectId=objectId;
     this.calendarId=calendarId;
@@ -32,6 +34,7 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
     this.objectType = objectType;
     this.eventId = eventId;
     this.eventType=eventType;
+    this.timezone=timezone;
   }
 
 }
