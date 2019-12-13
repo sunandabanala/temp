@@ -170,6 +170,7 @@ public class CalendarServiceImpl implements CalendarService {
       JsonNode jsonNode = it.next();
       if(jsonNode.get("object").asText().equals("calendar") && jsonNode.get("read_only").asText().equals("false")) {
         calendar_Id=jsonNode.get("id").asText();
+        break;
       }
     }
     return calendar_Id;
