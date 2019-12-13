@@ -44,9 +44,6 @@ public class AuthInterceptor implements HandlerInterceptor {
       String token = calendarMapper.getTokenByUserId(userId);
       if(token == null) {
         token = defaultToken;
-        applicationContextService.setCurrentUserEmail(System.getenv("default_calendar_name"));
-      }else{
-        applicationContextService.setCurrentUserEmail(email);
       }
       applicationContextService.setToken(token);
     }
