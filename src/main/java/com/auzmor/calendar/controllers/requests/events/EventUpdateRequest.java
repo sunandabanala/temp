@@ -52,6 +52,7 @@ public class EventUpdateRequest {
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String location;
 
+/*
   public long getStart() {
     return ZonedDateTime.parse(this.start).toInstant().getEpochSecond();
   }
@@ -59,4 +60,6 @@ public class EventUpdateRequest {
   public long getEnd() {
     return ZonedDateTime.parse(this.end).toInstant().getEpochSecond();
   }
+
+ */
 }

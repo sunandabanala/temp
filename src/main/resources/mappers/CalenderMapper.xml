@@ -21,8 +21,8 @@
     </resultMap>
 
     <insert id="saveEvent" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type)
-        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType});
+        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type, timezone)
+        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType}, #{event.timezone});
     </insert>
 
     <update id='updateEvent' parameterType='String'>

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `calendar_details` (
   `is_owner` boolean not null default 1,
   `created_at` TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
+  `timezone` varchar(255) NOT NULL,
   `uuid` char(32) NOT NULL UNIQUE,
   `account_id` char(32) REFERENCES `user_account` (`uuid`),
   PRIMARY KEY (`id`)

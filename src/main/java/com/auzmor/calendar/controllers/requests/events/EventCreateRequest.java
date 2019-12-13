@@ -56,7 +56,7 @@ public class EventCreateRequest {
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String location;
 
-
+/*
   public long getStart() {
     return ZonedDateTime.parse(this.start).toInstant().getEpochSecond();
   }
@@ -64,4 +64,6 @@ public class EventCreateRequest {
   public long getEnd() {
     return ZonedDateTime.parse(this.end).toInstant().getEpochSecond();
   }
+
+ */
 }
