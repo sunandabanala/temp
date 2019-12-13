@@ -1,5 +1,6 @@
 package com.auzmor.calendar.models.entities;
 
+import com.auzmor.calendar.models.UserAccount;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
   private ObjectType objectType;
   private String eventId;
   private EventType eventType;
+  private UserAccount account;
 
   public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType, String eventId, EventType eventType) {
     super(uuid);

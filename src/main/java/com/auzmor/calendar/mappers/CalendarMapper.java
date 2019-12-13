@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Mapper
 public interface CalendarMapper {
@@ -18,5 +19,7 @@ public interface CalendarMapper {
   String getTokenByUserId(@Param("userId") final String userId);
   void updateCursorIdByEmail(@Param("cursorId") final String cursorId, @Param("email") final String email);
   void updateCursorIdByUserId(@Param("cursorId") final String cursorId, @Param("userId") final String userId);
+  List<Event> getEventsWithTokens(@Param("objectIds") final Set objectIds);
+  void updateEvents(@Param("events") final List<Map> events);
 
 }

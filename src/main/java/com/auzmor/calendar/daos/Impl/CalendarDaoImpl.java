@@ -1,10 +1,16 @@
 package com.auzmor.calendar.daos.Impl;
 
+import com.auzmor.calendar.constants.NylasApiConstants;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.models.entities.Event;
+import com.auzmor.calendar.utils.RestTemplateUtil;
+import com.google.gson.Gson;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -50,10 +56,23 @@ public class CalendarDaoImpl implements CalendarDao {
 
   @Override
   public void updateCursorId(String cursorId, String defaultCursorId, String email, String userId) {
-
     calendarMapper.updateCursorIdByEmail(defaultCursorId, email);
-    if(cursorId != null)
+    if (cursorId != null)
       calendarMapper.updateCursorIdByUserId(cursorId, userId);
+  }
+
+  public void updateEvents(List<Map> events) {
+    calendarMapper.updateEvents(events);
+  }
+
+  public void updateNylasApis(List<Map> apis) {
+    for (int i=0; i<apis.size(); i++) {
+      String url = NylasApiConstants.UPDATE_EVENT;
+      url.replace("{id}", apis.get(i).get("id").toString());
+      Gson gson = new Gson();
+      String body = gson.toJson(apis.get(i).get("when"));
+      ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, url, HttpMethod.PUT);
+    }
   }
 
 }
