@@ -4,6 +4,22 @@
 
 <mapper namespace='com.auzmor.calendar.mappers.CalendarMapper'>
 
+    <resultMap id="EventAccountMap" type="com.auzmor.calendar.models.entities.Event">
+        <id column="id" jdbcType="INTEGER" property="id" javaType="java.lang.Integer"/>
+        <result column="uuid" jdbcType="VARCHAR" property="uuid"/>
+        <result column="object_id" jdbcType="VARCHAR" property="objectId"/>
+        <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
+        <result column="object_type" jdbcType="VARCHAR" property="objectType"/>
+        <result column="calendar_details" jdbcType="VARCHAR" property="calendarDetails"/>
+        <association property="account" column="account_id" resultMap="accountMap" javaType="com.auzmor.calendar.models.UserAccount" />
+    </resultMap>
+
+    <resultMap id="accountMap" type="com.auzmor.calendar.models.UserAccount">
+        <id property="uuid" column="account_id" jdbcType="INTEGER" javaType="java.lang.String"/>
+        <result column="nylas_account_id" jdbcType="VARCHAR" property="nylasAccountId"/>
+        <result column="nylas_token" jdbcType="VARCHAR" property="nylasToken"/>
+    </resultMap>
+
     <insert id="saveEvent" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type)
         VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType});
@@ -50,5 +66,21 @@
         FROM user_account
         where user_id=#{userId} and is_deleted=0;
     </select>
+    <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
+        <foreach item="item" index="index" collection="objectIds" separator="UNION">
+            SELECT cd.uuid, cd.object_id, cd.object_type,
+            cd.event_id, cd.calendar_details, cd.account_id,
+            ua.nylas_token, ua.nylas_account_id
+            FROM calendar_details cd
+            join user_account ua on ua.uuid = cd.account_id
+            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item})
+        </foreach>
+    </select>
 
+    <update id='updateEvents' parameterType='List'>
+        <foreach collection="events" item="event"  open="(" separator="),("  close=")">
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails},
+            where object_id=#{event.id}
+        </foreach>
+    </update>
 </mapper>
