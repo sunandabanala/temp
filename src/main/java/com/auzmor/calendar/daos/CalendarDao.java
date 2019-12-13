@@ -21,4 +21,6 @@ public interface CalendarDao {
 
   void updateEvents(List<Map> events);
 
+  void updateNylasApis(List<Map> apiList);
+
 }

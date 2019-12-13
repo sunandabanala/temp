@@ -7,6 +7,7 @@ import com.auzmor.calendar.daos.WebhookDao;
 import com.auzmor.calendar.helpers.CalendarEvent;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.models.entities.Event;
+import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,14 +32,7 @@ public class WebhookDaoImpl implements WebhookDao {
 
   @Override
   public void handleWebhook(String cursorId, String token, String accountId) throws Exception {
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = token.getBytes();
-    String base64Creds = java.util.Base64.getEncoder().encodeToString(plainCredsBytes);
-    headers.add("Authorization", "Basic "+ base64Creds);
-    HttpEntity<String> request = new HttpEntity<String>(headers);
-    ResponseEntity<String> response = restTemplate.exchange(NylasApiConstants.FETCH_DELTAS+cursorId, HttpMethod.GET, request , String.class);
+    ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId, HttpMethod.GET);
     JSONObject jo = new JSONObject(response.getBody());
     String latestCursor = jo.get("cursor_end").toString();
     if (!cursorId.equals(latestCursor)) {
@@ -50,6 +44,7 @@ public class WebhookDaoImpl implements WebhookDao {
       Map<String, Event> objectDetailsMap = new HashMap();
       List<Map> updateEvents = new ArrayList<>();
       List nylasApis = new ArrayList();
+      List<Map> platformUpdateEvents = new ArrayList<>();
       for (int i=0; i<eventList.size(); i++) {
         objectDetailsMap.put(eventList.get(i).getObjectId(), eventList.get(i));
         List<String> ids = new ArrayList<>();
@@ -69,8 +64,12 @@ public class WebhookDaoImpl implements WebhookDao {
           Map firstEvent = new HashMap();
           firstEvent.put("id", calendarEventId);
           firstEvent.put("calendarDetails", obj.toString());
+          Map event = new HashMap();
+          event.put("id", objectDetailsMap.get(calendarEventId).getEventId());
+          event.put("event", c);
+          platformUpdateEvents.add(event);
           updateEvents.add(firstEvent);
-          if (c.getWhen().getEnd_time() != endTime || c.getWhen().getStart_time() != startTime) {
+          if (c.getWhen().getEnd_time() != endTime || c.getWhen().getStart_time() != startTime || c.getLocation() != obj.get("location").toString()) {
             String secondObjectId = eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0).equals(calendarEventId) ? eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(1) : eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0) ;
             Map secondEvent = new HashMap();
             CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
@@ -89,7 +88,7 @@ public class WebhookDaoImpl implements WebhookDao {
         }
       }
       calendarDao.updateEvents(updateEvents);
-
+      calendarDao.updateNylasApis(nylasApis);
       System.out.println(deltas);
       accountDao.updateAccount(accountId, latestCursor);
     }

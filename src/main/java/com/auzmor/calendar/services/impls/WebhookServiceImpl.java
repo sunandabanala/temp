@@ -26,9 +26,6 @@ public class WebhookServiceImpl implements WebhookService {
   public void handleWebhook(String date, String objectId, String eventType, String object, String accountId) throws Exception {
     UserAccount account = accountDao.getAccount(accountId);
     String cursorId = account.getCursorId();
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
     String token = account.getNylasToken() + ":";
     webhookDao.handleWebhook(cursorId, token, accountId);
   }
