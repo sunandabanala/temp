@@ -58,9 +58,12 @@ public class WebhookDaoImpl implements WebhookDao {
         if (objectDetailsMap.containsKey(calendarEventId)) {
           Gson gson = new Gson();
           CalendarEvent c = gson.fromJson(objectDetailsMap.get(calendarEventId).getCalendarDetails(), CalendarEvent.class);
-          JSONObject obj = (JSONObject) events.get(calendarEventId);
-          long startTime = (long)obj.get("start_time");
-          long endTime = (long)obj.get("end_time");
+          JSONObject jsonobj = (JSONObject) events.get(calendarEventId);
+          JSONObject obj = (JSONObject) jsonobj.get("when");
+          Integer start = (Integer) obj.get("start_time");
+          Integer end = (Integer) obj.get("end_time");
+          long startTime = start.longValue();
+          long endTime = end.longValue();
           Map firstEvent = new HashMap();
           firstEvent.put("id", calendarEventId);
           firstEvent.put("calendarDetails", obj.toString());
