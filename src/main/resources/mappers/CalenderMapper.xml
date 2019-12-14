@@ -11,6 +11,7 @@
         <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
         <result column="object_type" jdbcType="VARCHAR" property="objectType"/>
         <result column="calendar_details" jdbcType="VARCHAR" property="calendarDetails"/>
+        <result column="time_zone" jdbcType="VARCHAR" property="timeZone"/>
         <association property="account" column="account_id" resultMap="accountMap" javaType="com.auzmor.calendar.models.UserAccount" />
     </resultMap>
 
@@ -70,7 +71,7 @@
         <foreach item="item" index="index" collection="objectIds" separator="UNION">
             SELECT cd.uuid, cd.object_id, cd.object_type,
             cd.event_id, cd.calendar_details, cd.account_id,
-            ua.nylas_token, ua.nylas_account_id
+            cd.time_zone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd
             join user_account ua on ua.uuid = cd.account_id
             WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item})

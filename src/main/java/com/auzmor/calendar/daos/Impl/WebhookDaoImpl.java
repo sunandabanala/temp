@@ -67,6 +67,7 @@ public class WebhookDaoImpl implements WebhookDao {
           Map event = new HashMap();
           event.put("id", objectDetailsMap.get(calendarEventId).getEventId());
           event.put("event", c);
+          event.put("timeZone", objectDetailsMap.get(calendarEventId).getTimeZone());
           platformUpdateEvents.add(event);
           updateEvents.add(firstEvent);
           if (c.getWhen().getEnd_time() != endTime || c.getWhen().getStart_time() != startTime || c.getLocation() != obj.get("location").toString()) {
@@ -89,7 +90,6 @@ public class WebhookDaoImpl implements WebhookDao {
       }
       calendarDao.updateEvents(updateEvents);
       calendarDao.updateNylasApis(nylasApis);
-      System.out.println(deltas);
       accountDao.updateAccount(accountId, latestCursor);
     }
   }
