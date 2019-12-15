@@ -21,6 +21,7 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
   private ObjectType objectType;
   private String eventId;
   private EventType eventType;
+  private String timeZone;
   private UserAccount account;
   private String timezone;
 

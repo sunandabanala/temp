@@ -10,9 +10,11 @@ public class RestTemplateUtil {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = token.getBytes();
-    String base64Creds = java.util.Base64.getEncoder().encodeToString(plainCredsBytes);
-    headers.add("Authorization", "Basic "+ base64Creds);
+    if (token != null) {
+      byte[] plainCredsBytes = token.getBytes();
+      String base64Creds = java.util.Base64.getEncoder().encodeToString(plainCredsBytes);
+      headers.add("Authorization", "Basic " + base64Creds);
+    }
     HttpEntity<String> request = new HttpEntity<String>(body, headers);
     return restTemplate.exchange(url, method, request, String.class);
   }

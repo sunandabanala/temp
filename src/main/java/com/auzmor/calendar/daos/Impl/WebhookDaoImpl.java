@@ -59,14 +59,18 @@ public class WebhookDaoImpl implements WebhookDao {
           Gson gson = new Gson();
           CalendarEvent c = gson.fromJson(objectDetailsMap.get(calendarEventId).getCalendarDetails(), CalendarEvent.class);
           JSONObject obj = (JSONObject) events.get(calendarEventId);
-          long startTime = (long)obj.get("start_time");
-          long endTime = (long)obj.get("end_time");
+          JSONObject jsonobj = (JSONObject) obj.get("when");
+          Integer start = (Integer) jsonobj.get("start_time");
+          Integer end = (Integer) jsonobj.get("end_time");
+          long startTime = start.longValue();
+          long endTime = end.longValue();
           Map firstEvent = new HashMap();
           firstEvent.put("id", calendarEventId);
           firstEvent.put("calendarDetails", obj.toString());
           Map event = new HashMap();
           event.put("id", objectDetailsMap.get(calendarEventId).getEventId());
           event.put("event", c);
+          event.put("timeZone", objectDetailsMap.get(calendarEventId).getTimeZone());
           platformUpdateEvents.add(event);
           updateEvents.add(firstEvent);
           if (c.getWhen().getEnd_time() != endTime || c.getWhen().getStart_time() != startTime || c.getLocation() != obj.get("location").toString()) {
@@ -75,13 +79,14 @@ public class WebhookDaoImpl implements WebhookDao {
             CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
             c2.getWhen().setEnd_time(endTime);
             c2.getWhen().setStart_time(startTime);
+            String eventStr = gson.toJson(c2, CalendarEvent.class);
             secondEvent.put("id", secondObjectId);
-            secondEvent.put("calendarDetails", c2.toString());
+            secondEvent.put("calendarDetails", eventStr);
             updateEvents.add(secondEvent);
             Map nylasApi = new HashMap();
-            nylasApi.put("eventId", secondObjectId);
+            nylasApi.put("id", secondObjectId);
             nylasApi.put("when", c2.getWhen());
-            nylasApi.put("token", objectDetailsMap.get(secondObjectId).getAccount().getNylasToken());
+            nylasApi.put("token", objectDetailsMap.get(secondObjectId).getAccount().getNylasToken()+":");
             nylasApi.put("calendarId", objectDetailsMap.get(secondObjectId).getCalendarId());
             nylasApis.add(nylasApi);
           }
@@ -89,7 +94,7 @@ public class WebhookDaoImpl implements WebhookDao {
       }
       calendarDao.updateEvents(updateEvents);
       calendarDao.updateNylasApis(nylasApis);
-      System.out.println(deltas);
+      calendarDao.updatePlatformEvents(platformUpdateEvents);
       accountDao.updateAccount(accountId, latestCursor);
     }
   }

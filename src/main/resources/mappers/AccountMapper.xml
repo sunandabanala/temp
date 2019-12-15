@@ -5,8 +5,8 @@
 <mapper namespace='com.auzmor.calendar.mappers.AccountMapper'>
 
   <select id="getAccount" parameterType="String" resultType='com.auzmor.calendar.models.UserAccount'>
-    SELECT uuid, username, provider_name as providerName,
-    refresh_token as refreshToken, nylas_token as nylasToken, nylas_account_id AS nylasAccountId, cursor_id AS cursorId
+    SELECT uuid, username, provider_type as providerName,
+    provider_refresh_token as refreshToken, nylas_token as nylasToken, nylas_account_id AS nylasAccountId, cursor_id AS cursorId
     from user_account where nylas_account_id = #{accountId}
   </select>
 

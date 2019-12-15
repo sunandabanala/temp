@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
-import static com.auzmor.calendar.constants.NylasEndPointConstants.GET_LATEST_CURSOR_URI;
+import static com.auzmor.calendar.constants.ApiConstants.GET_LATEST_CURSOR_URI;
 
 @Service
 public class AccountServiceImpl implements AccountService {

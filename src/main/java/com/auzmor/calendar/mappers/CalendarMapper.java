@@ -20,6 +20,6 @@ public interface CalendarMapper {
   void updateCursorIdByEmail(@Param("cursorId") final String cursorId, @Param("email") final String email);
   void updateCursorIdByUserId(@Param("cursorId") final String cursorId, @Param("userId") final String userId);
   List<Event> getEventsWithTokens(@Param("objectIds") final Set objectIds);
-  void updateEvents(@Param("events") final List<Map> events);
+  void updateEvents(@Param("events") final List events);
 
 }
