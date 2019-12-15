@@ -70,10 +70,10 @@ public class CalendarDaoImpl implements CalendarDao {
   public void updateNylasApis(List<Map> apis) {
     for (int i=0; i<apis.size(); i++) {
       String url = NylasApiConstants.UPDATE_EVENT;
-      String url2 = url.replace("{id}", apis.get(i).get("id").toString());
+      String updatedUrl = url.replace("{id}", apis.get(i).get("id").toString());
       Gson gson = new Gson();
       String body = gson.toJson(apis.get(i).get("when"));
-      ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, url2, HttpMethod.PUT);
+      ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, updatedUrl, HttpMethod.PUT);
     }
   }
 
