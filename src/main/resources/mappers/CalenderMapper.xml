@@ -11,6 +11,7 @@
         <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
         <result column="object_type" jdbcType="VARCHAR" property="objectType"/>
         <result column="calendar_details" jdbcType="VARCHAR" property="calendarDetails"/>
+        <result column="event_id" jdbcType="VARCHAR" property="eventId"/>
         <result column="timeZone" jdbcType="VARCHAR" property="timeZone"/>
         <association property="account" column="account_id" resultMap="accountMap" javaType="com.auzmor.calendar.models.UserAccount" />
     </resultMap>
@@ -78,10 +79,18 @@
         </foreach>
     </select>
 
-    <update id='updateEvents' parameterType='List'>
-        <foreach collection="events" item="event"  open="(" separator="),("  close=")">
-            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails},
-            where object_id=#{event.id}
+    <update id="updateEvents" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE calendar_details SET calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
         </foreach>
     </update>
+
+    <!--<update id='updateEvents' parameterType="java.util.List">
+        UPDATE calendar_details SET calendar_details = (CASE object_id
+        <foreach collection="events" item="event"  index="index" >
+            WHEN #{event.id} THEN #{event.calendarDetails}
+        </foreach>
+        END)
+        WHERE object_id IN (#{objectId})
+    </update>-->
 </mapper>

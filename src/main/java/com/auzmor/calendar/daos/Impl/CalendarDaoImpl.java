@@ -9,8 +9,6 @@ import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
-import com.sun.research.ws.wadl.HTTPMethods;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
@@ -72,13 +70,14 @@ public class CalendarDaoImpl implements CalendarDao {
   public void updateNylasApis(List<Map> apis) {
     for (int i=0; i<apis.size(); i++) {
       String url = NylasApiConstants.UPDATE_EVENT;
-      url.replace("{id}", apis.get(i).get("id").toString());
+      String url2 = url.replace("{id}", apis.get(i).get("id").toString());
       Gson gson = new Gson();
       String body = gson.toJson(apis.get(i).get("when"));
-      ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, url, HttpMethod.PUT);
+      ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, url2, HttpMethod.PUT);
     }
   }
 
+  @Override
   public void updatePlatformEvents(List<Map> events) {
     Gson gson = new Gson();
     for (int i=0; i<events.size(); i++) {
