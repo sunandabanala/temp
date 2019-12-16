@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserAccount extends Entity {
-  private String userName;
+  private String username;
   private String userId;
   private String providerType;
   private String refreshToken;

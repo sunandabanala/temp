@@ -1,6 +1,5 @@
 package com.auzmor.calendar.services;
 
-import org.springframework.stereotype.Service;
 
 public interface ApplicationContextService {
 
