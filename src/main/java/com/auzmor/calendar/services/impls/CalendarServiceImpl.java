@@ -2,13 +2,17 @@ package com.auzmor.calendar.services.impls;
 
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.daos.CalendarDao;
+import com.auzmor.calendar.helpers.CalendarEvent;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import com.auzmor.calendar.services.ApplicationContextService;
 import com.auzmor.calendar.services.CalendarService;
+import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.sun.research.ws.wadl.HTTPMethods;
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,29 +42,27 @@ public class CalendarServiceImpl implements CalendarService {
   public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
                          String externalDescription, String location) throws JSONException, IOException {
 
-    String default_calendar_Id;
-    String organizer_calendar_Id;
+    String defaultCalendarId;
+    String organizerCalendarId;
     String timezone = getTimeZone(start);
     String userId = applicationContextService.getCurrentUserId();
+    String accountId = applicationContextService.getAccountId();
+    String defaultUserId = applicationContextService.getDefaultUserId();
+    String defaultAccountId = applicationContextService.getDefaultAccountId();
     String recruiterName = applicationContextService.getCurrentUsername();
     String uuid = UUID.randomUUID().toString().replace("-", "");
     String candidateUUID = UUID.randomUUID().toString().replace("-", "");
-    HttpHeaders headers = new HttpHeaders();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
-    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
 
-    headers.add("Authorization", "Basic " + organizerToken);
-    httpHeaders.add("Authorization", "Basic " + defaultToken);
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
+
+
     if(defaultToken.equals(organizerToken)) {
-      organizer_calendar_Id = getCalendarId(organizerToken, restTemplate);
-      default_calendar_Id = organizer_calendar_Id;
+      organizerCalendarId = getCalendarId(organizerToken);
+      defaultCalendarId = organizerCalendarId;
     }else {
-      organizer_calendar_Id = getCalendarId(organizerToken, restTemplate);
-      default_calendar_Id = getCalendarId(defaultToken, restTemplate);
+      organizerCalendarId = getCalendarId(organizerToken);
+      defaultCalendarId = getCalendarId(defaultToken);
     }
 
     Set<String> attendeeEmailList = new HashSet<>();
@@ -72,35 +74,27 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
-    JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
+    JSONObject guestJson = calendardataJson(guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, location, dummyRecruiter);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, null);
 
+    ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST);
+    ResponseEntity<String> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST);
 
-    HttpEntity<String> request = new HttpEntity<String>(interviewersJson.toString(), headers);
-    HttpEntity<String> httpRequest = new HttpEntity<String>(guestJson.toString(), httpHeaders);
-
-    ResponseEntity<String> response = restTemplate.postForEntity( CREATE_EVENT, request , String.class );
-    ResponseEntity<String> candidateResponse = restTemplate.postForEntity( CREATE_EVENT, httpRequest , String.class );
-
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(response.getBody());
-    String calendarData = String.valueOf(root);
-
-    ObjectMapper candidateMapper = new ObjectMapper();
-    JsonNode candidateRoot = candidateMapper.readTree(candidateResponse.getBody());
-    String candidateEventData = String.valueOf(candidateRoot);
+    Gson gson = new Gson();
+    CalendarEvent calendarData = gson.fromJson(response.getBody(), CalendarEvent.class);
+    CalendarEvent candidateEventData = gson.fromJson(candidateResponse.getBody(), CalendarEvent.class);
 
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultUserId, null);
     }else {
-      String organizaerCursorId= getCursorId(organizerToken);
+      String organizerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
+      calendarDao.updateCursorId(organizerCursorId, defaultCursorId, defaultUserId, userId);
     }
 
-    Event event = new Event(root.get("id").asText(), organizer_calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
-    Event candidateEvent = new Event(candidateRoot.get("id").asText(), default_calendar_Id, "abc", candidateEventData , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
+    Event event = new Event(calendarData.getId(), organizerCalendarId, accountId, calendarData.toString() , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
+    Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, candidateEventData.toString() , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
     calendarDao.saveEvent(event,candidateEvent);
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
@@ -114,12 +108,7 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   String getCursorId(String token) throws IOException {
-    HttpHeaders httpHeaders = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    httpHeaders.add("Authorization", "Basic " + token);
-    HttpEntity<String> request = new HttpEntity<String>(null,httpHeaders);
-    ResponseEntity<String> response = restTemplate.postForEntity( FETCH_LATEST_CURSOR, request , String.class );
+    ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(token, null, FETCH_LATEST_CURSOR, HttpMethod.POST);
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(response.getBody());
     String cursorId = null;
@@ -127,14 +116,6 @@ public class CalendarServiceImpl implements CalendarService {
       return cursorId;
     }
     return root.get("cursor").asText();
-  }
-
-  String convertTokenToBase64(String token) {
-    String tokenValue = token+":";
-    byte[] plainCredsBytes = tokenValue.getBytes();
-    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-    String base64Creds = new String(base64CredsBytes);
-    return base64Creds;
   }
 
   JSONObject calendardataJson(Set<String> participants, String start, String end, String calendar_Id, String title, String description, String location,
@@ -165,12 +146,9 @@ public class CalendarServiceImpl implements CalendarService {
     return json;
   }
 
-  String getCalendarId(String base64Creds, RestTemplate restTemplate) throws IOException {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.add("Authorization", "Basic " + base64Creds);
-    HttpEntity<String> request = new HttpEntity<String>(headers);
-    ResponseEntity<String> response = restTemplate.exchange(FETCH_CALENDAR_ID, HttpMethod.GET, request, String.class);
+  String getCalendarId(String token) throws IOException {
+
+    ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(token, null, FETCH_CALENDAR_ID, HttpMethod.GET);
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(response.getBody());
     String calendar_Id=null;
@@ -192,28 +170,21 @@ public class CalendarServiceImpl implements CalendarService {
     String default_calendar_Id;
     String organizer_calendar_Id;
     String userId = applicationContextService.getCurrentUserId();
+    String defaultUserId = applicationContextService.getDefaultUserId();
     String recruiterName = applicationContextService.getCurrentUsername();
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
     String externalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
     String internalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
 
-    HttpHeaders headers = new HttpHeaders();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
-    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
 
-
-    headers.add("Authorization", "Basic " + organizerToken);
-    httpHeaders.add("Authorization", "Basic " + defaultToken);
     if(defaultToken.equals(organizerToken)) {
-      organizer_calendar_Id = getCalendarId(organizerToken, restTemplate);
+      organizer_calendar_Id = getCalendarId(organizerToken);
       default_calendar_Id = organizer_calendar_Id;
     }else {
-      organizer_calendar_Id = getCalendarId(organizerToken, restTemplate);
-      default_calendar_Id = getCalendarId(defaultToken, restTemplate);
+      organizer_calendar_Id = getCalendarId(organizerToken);
+      default_calendar_Id = getCalendarId(defaultToken);
     }
 
     Set<String> attendeeEmailList = new HashSet<>();
@@ -228,31 +199,24 @@ public class CalendarServiceImpl implements CalendarService {
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
 
+    ResponseEntity<String> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT);
+    ResponseEntity<String> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT);
 
-    HttpEntity<String> request = new HttpEntity<String>(interviewersJson.toString(), headers);
-    HttpEntity<String> httpRequest = new HttpEntity<String>(guestJson.toString(), httpHeaders);
+    Gson gson = new Gson();
+    CalendarEvent internalEventData = gson.fromJson(internalResponse.getBody(), CalendarEvent.class);
+    CalendarEvent externalEventData = gson.fromJson(externalResponse.getBody(), CalendarEvent.class);
 
-    ResponseEntity<String> externalResponse = restTemplate.exchange(externalEventUrl, HttpMethod.PUT, httpRequest , String.class );
-    ResponseEntity<String> internalResponse = restTemplate.exchange(internalEventUrl, HttpMethod.PUT, request , String.class );
-
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(externalResponse.getBody());
-    String internalEventData = String.valueOf(root);
-
-    ObjectMapper candidateMapper = new ObjectMapper();
-    JsonNode candidateRoot = candidateMapper.readTree(internalResponse.getBody());
-    String externalEventData = String.valueOf(candidateRoot);
 
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultUserId, null);
     }else {
-      String organizaerCursorId= getCursorId(organizerToken);
+      String organizerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizaerCursorId, defaultCursorId, System.getenv("default_email"), userId);
+      calendarDao.updateCursorId(organizerCursorId, defaultCursorId, defaultUserId, userId);
     }
 
-    calendarDao.updateEvent(eventId, internalEventData, externalEventData);
+    calendarDao.updateEvent(eventId, internalEventData.toString(), externalEventData.toString());
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
     return result;
@@ -260,21 +224,15 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object checkAvailability(String email, long start, long end) throws IOException {
-    HttpHeaders headers = new HttpHeaders();
     Set<String> emails = new HashSet<>();
     emails.add(email);
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
-    headers.add("Authorization", "Basic " + organizerToken);
+    String organizerToken = applicationContextService.geToken();
     Map<String, Object> m = new HashMap();
-    JSONObject personJsonObject = new JSONObject();
     m.put("start_time", Long.toString(start));
     m.put("end_time", Long.toString(end));
     m.put("emails", emails);
     JSONObject json = new JSONObject(m);
-    HttpEntity<String> request = new HttpEntity<String>(json.toString(), headers);
-    ResponseEntity<String> response = restTemplate.postForEntity(CHECK_AVAILABILITY, request, String.class);
+    ResponseEntity<String> response = RestTemplateUtil.restTemplateUtil(organizerToken, json.toString(), CHECK_AVAILABILITY, HttpMethod.POST);
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(response.getBody());
     Map<String, Object> result = new HashMap();
@@ -290,30 +248,23 @@ public class CalendarServiceImpl implements CalendarService {
   public void deleteEvent(String id) throws IOException {
     String userId = applicationContextService.getCurrentUserId();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(id);
+    String defaultUserId = applicationContextService.getDefaultUserId();
     String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
     String internalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
-    HttpHeaders headers = new HttpHeaders();
-    HttpHeaders httpHeaders = new HttpHeaders();
 
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    String organizerToken = convertTokenToBase64(applicationContextService.geToken());
-    String defaultToken = convertTokenToBase64(applicationContextService.getDefaultToken());
-    headers.add("Authorization", "Basic " + organizerToken);
-    httpHeaders.add("Authorization", "Basic " + defaultToken);
-    HttpEntity<String> request = new HttpEntity<String>(null,headers);
-    HttpEntity<String> externalRequest = new HttpEntity<String>(null,httpHeaders);
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
 
-    ResponseEntity response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, String.class);
-    ResponseEntity externalResponse = restTemplate.exchange(externalEventUrl, HttpMethod.DELETE, externalRequest, String.class);
+    ResponseEntity<String> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, null, internalEventUrl, HttpMethod.DELETE);
+    ResponseEntity<String> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, null, externalEventUrl, HttpMethod.DELETE);
+
     if(defaultToken.equals(organizerToken)) {
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(null, defaultCursorId, System.getenv("default_email"), null);
+      calendarDao.updateCursorId(null, defaultCursorId, defaultUserId, null);
     }else {
       String organizerCursorId= getCursorId(organizerToken);
       String defaultCursorId = getCursorId(defaultToken);
-      calendarDao.updateCursorId(organizerCursorId, defaultCursorId, System.getenv("default_email"), userId);
+      calendarDao.updateCursorId(organizerCursorId, defaultCursorId, defaultUserId, userId);
     }
     calendarDao.deleteEvent(id);
   }

@@ -14,6 +14,10 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
+
+import static com.auzmor.calendar.constants.DataConstants.DEFAULT_MAIL;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
@@ -37,19 +41,30 @@ public class AuthInterceptor implements HandlerInterceptor {
     final String nylasToken  = customPrincipal.getNylasToken();
     final String username = customPrincipal.getFirstName()+" "+customPrincipal.getLastName();
     final String userId = customPrincipal.getUuid();
-    String defaultToken=calendarMapper.getTokenByEmail(System.getenv("default_email"));
+    final String accountId = customPrincipal.getAccountId();
+    String userNylasToken=null;
+    String userAccountId=null;
+    Map<String,String> defaultTokenDataByEmail=calendarMapper.getDefaultTokenDataByEmail(DEFAULT_MAIL);
     if(nylasToken != null) {
       applicationContextService.setToken(nylasToken);
+      applicationContextService.setAccountId(accountId);
     }else{
-      String token = calendarMapper.getTokenByUserId(userId);
-      if(token == null) {
-        token = defaultToken;
+      Map<String,String> userTokenDataByEmail = calendarMapper.getDefaultTokenDataByEmail(email);
+      if(userTokenDataByEmail == null) {
+        userNylasToken = defaultTokenDataByEmail.get("nylas_token");
+        userAccountId = defaultTokenDataByEmail.get("uuid");
+      }else {
+        userNylasToken = userTokenDataByEmail.get("nylas_token");
+        userAccountId = userTokenDataByEmail.get("uuid");
       }
-      applicationContextService.setToken(token);
+      applicationContextService.setToken(userNylasToken);
+      applicationContextService.setAccountId(userAccountId);
     }
     applicationContextService.setCurrentUsername(username);
     applicationContextService.setCurrentUserId(userId);
-    applicationContextService.setDefaultToken(defaultToken);
+    applicationContextService.setDefaultToken(defaultTokenDataByEmail.get("nylas_token"));
+    applicationContextService.setDefaultAccountId(defaultTokenDataByEmail.get("uuid"));
+    applicationContextService.setDefaultUserId(defaultTokenDataByEmail.get("user_id"));
 
     return true;
   }

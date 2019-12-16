@@ -5,20 +5,22 @@ import org.springframework.stereotype.Service;
 
 public class ApplicationContextServiceImpl implements ApplicationContextService {
 
-  private String email;
   private String token;
   private String username;
   private String currentUserId;
   private String defaultToken;
+  private String accountId;
+  private String defaultAccountId;
+  private String defaultUserId;
 
   @Override
-  public String getCurrentUserEmail() {
-    return this.email;
+  public String getAccountId() {
+    return this.accountId;
   }
 
   @Override
-  public void setCurrentUserEmail(String email) {
-    this.email=email;
+  public void setAccountId(String accountId) {
+    this.accountId=accountId;
   }
 
   @Override
@@ -59,5 +61,25 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   @Override
   public void setDefaultToken(String defaultToken) {
     this.defaultToken=defaultToken;
+  }
+
+  @Override
+  public String getDefaultAccountId() {
+    return this.defaultAccountId;
+  }
+
+  @Override
+  public void setDefaultAccountId(String defaultAccountId) {
+    this.defaultAccountId=defaultAccountId;
+  }
+
+  @Override
+  public String getDefaultUserId() {
+    return this.defaultUserId;
+  }
+
+  @Override
+  public void setDefaultUserId(String defaultUserId) {
+    this.defaultUserId=defaultUserId;
   }
 }

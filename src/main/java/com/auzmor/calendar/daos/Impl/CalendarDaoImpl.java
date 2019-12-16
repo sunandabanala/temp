@@ -8,6 +8,7 @@ import com.auzmor.calendar.helpers.CalendarEvent;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.utils.RestTemplateUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +28,25 @@ public class CalendarDaoImpl implements CalendarDao {
   CalendarMapper calendarMapper;
 
   @Override
-  public Event saveEvent(Event event, Event candidateEvent) {
-    calendarMapper.saveEvent(event);
-    calendarMapper.saveEvent(candidateEvent);
-    return null;
+  public void saveEvent(Event event, Event candidateEvent) {
+    List<Event> events = new ArrayList<>();
+    events.add(event);
+    events.add(candidateEvent);
+    calendarMapper.saveEvents(events);
   }
 
   @Override
-  public Event updateEvent(String id, String internalEventData, String externalEventData) {
-    calendarMapper.updateEvent(id, internalEventData);
-    calendarMapper.updateEvent(id, externalEventData);
-    return null;
+  public void updateEvent(String id, String internalEventData, String externalEventData) {
+    List<Map> updateEvents = new ArrayList<>();
+    Map externalEvent = new HashMap();
+    Map internalEvent = new HashMap();
+    internalEvent.put("id", id);
+    internalEvent.put("calendarDetails", internalEventData);
+    externalEvent.put("id", id);
+    externalEvent.put("calendarDetails", externalEventData);
+    updateEvents.add(internalEvent);
+    updateEvents.add(externalEvent);
+    calendarMapper.updateListOfEvent(updateEvents);
   }
 
   @Override
@@ -55,10 +65,20 @@ public class CalendarDaoImpl implements CalendarDao {
   }
 
   @Override
-  public void updateCursorId(String cursorId, String defaultCursorId, String email, String userId) {
-    calendarMapper.updateCursorIdByEmail(defaultCursorId, email);
-    if (cursorId != null)
-      calendarMapper.updateCursorIdByUserId(cursorId, userId);
+  public void updateCursorId(String cursorId, String defaultCursorId, String defaultUserId, String userId) {
+    List<Map> updateCursors = new ArrayList<>();
+    Map defaultUser = new HashMap();
+    Map user = new HashMap();
+    defaultUser.put("userId", defaultUserId);
+    defaultUser.put("cursorId", defaultCursorId);
+    updateCursors.add(defaultUser);
+    if (userId != null) {
+      user.put("userId", userId);
+      user.put("cursorId", cursorId);
+      updateCursors.add(user);
+    }
+
+    calendarMapper.updateListOfCursorIds(updateCursors);
   }
 
   public void updateEvents(List<Map> events) {

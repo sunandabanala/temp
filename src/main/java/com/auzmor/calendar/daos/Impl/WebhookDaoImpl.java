@@ -85,7 +85,7 @@ public class WebhookDaoImpl implements WebhookDao {
             Map nylasApi = new HashMap();
             nylasApi.put("id", secondObjectId);
             nylasApi.put("when", c2.getWhen());
-            nylasApi.put("token", objectDetailsMap.get(secondObjectId).getAccount().getNylasToken()+":");
+            nylasApi.put("token", objectDetailsMap.get(secondObjectId).getAccount().getNylasToken());
             nylasApi.put("calendarId", objectDetailsMap.get(secondObjectId).getCalendarId());
             nylasApis.add(nylasApi);
           }
