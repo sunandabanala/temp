@@ -22,16 +22,6 @@
         <result column="nylas_token" jdbcType="VARCHAR" property="nylasToken"/>
     </resultMap>
 
-    <insert id="saveEvent" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO calendar_details(uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type, timezone)
-        VALUES(#{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType}, #{event.timezone});
-    </insert>
-
-    <update id='updateEvent' parameterType='String'>
-        UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details=#{calendarData}
-        where object_id=#{id}
-    </update>
-
     <update id='updateCursorIdByUserId' parameterType='String'>
         UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
         where user_id=#{userId}
@@ -55,9 +45,11 @@
         where event_id=#{id} and is_deleted=0;
     </select>
 
-    <select id='getTokenByEmail' parameterType='String' resultType="String">
+    <select id='getDefaultTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
         SELECT
-        nylas_token
+        nylas_token,
+        uuid,
+        user_id
         FROM user_account
         where username=#{email} and is_deleted=0;
     </select>
@@ -81,16 +73,28 @@
 
     <update id="updateEvents" parameterType="java.util.List">
         <foreach collection="events" item="event" index="index" separator=";" close=";">
-            UPDATE calendar_details SET calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
         </foreach>
     </update>
 
-    <!--<update id='updateEvents' parameterType="java.util.List">
-        UPDATE calendar_details SET calendar_details = (CASE object_id
-        <foreach collection="events" item="event"  index="index" >
-            WHEN #{event.id} THEN #{event.calendarDetails}
+    <update id="updateListOfEvent" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE event_id = #{event.id}
         </foreach>
-        END)
-        WHERE object_id IN (#{objectId})
-    </update>-->
+    </update>
+
+    <insert id="saveEvents" parameterType="java.util.List">
+        INSERT INTO calendar_details (
+        uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type, timezone)
+        VALUES
+        <foreach collection="events" item="event" index="index" open="(" separator="),("  close=")">
+            #{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType}, #{event.timeZone}
+        </foreach>
+    </insert>
+
+    <update id="updateListOfCursorIds" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{event.cursorId} where user_id=#{event.userId}
+        </foreach>
+    </update>
 </mapper>

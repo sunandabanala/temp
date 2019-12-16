@@ -11,15 +11,13 @@ import java.util.Set;
 @Mapper
 public interface CalendarMapper {
 
-  void saveEvent(@Param("event") final Event event);
-  void updateEvent(@Param("id") final String id, @Param("calendarData") final String calendarData);
+  void updateListOfEvent(@Param("events") final List events);
   void deleteEvent(@Param("id") final String id);
   List<Map<String,String>> getCalendarIds(@Param("id") final String id);
-  String getTokenByEmail(@Param("email") final String email);
-  String getTokenByUserId(@Param("userId") final String userId);
-  void updateCursorIdByEmail(@Param("cursorId") final String cursorId, @Param("email") final String email);
-  void updateCursorIdByUserId(@Param("cursorId") final String cursorId, @Param("userId") final String userId);
+  Map<String, String> getDefaultTokenDataByEmail(@Param("email") final String email);
   List<Event> getEventsWithTokens(@Param("objectIds") final Set objectIds);
   void updateEvents(@Param("events") final List events);
+  void saveEvents(@Param("events") final List events);
+  void updateListOfCursorIds(@Param("events") final List events);
 
 }

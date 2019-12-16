@@ -13,7 +13,7 @@ import springfox.documentation.spring.web.json.Json;
 @NoArgsConstructor
 public class Event extends com.auzmor.calendar.models.entities.Entity {
 
-  private Integer id;
+  private String id;
   private String objectId;
   private String calendarId;
   private String accountId;
@@ -23,7 +23,6 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
   private EventType eventType;
   private String timeZone;
   private UserAccount account;
-  private String timezone;
 
   public Event(String objectId, String calendarId, String accountId, String calendarDetails, String uuid, ObjectType objectType, String eventId
                , EventType eventType, String timezone) {
@@ -35,7 +34,7 @@ public class Event extends com.auzmor.calendar.models.entities.Entity {
     this.objectType = objectType;
     this.eventId = eventId;
     this.eventType=eventType;
-    this.timezone=timezone;
+    this.timeZone=timezone;
   }
 
 }
