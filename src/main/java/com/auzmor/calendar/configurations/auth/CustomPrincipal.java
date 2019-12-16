@@ -25,4 +25,6 @@ public class CustomPrincipal implements Serializable {
   private String type;
   private CustomOrganization organization;
   private Set<CustomRole> roles;
+  private String nylasToken;
+  private String accountId;
 }

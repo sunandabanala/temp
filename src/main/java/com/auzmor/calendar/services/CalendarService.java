@@ -1,12 +1,24 @@
 package com.auzmor.calendar.services;
 
-import org.springframework.stereotype.Component;
+import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
+import org.json.JSONException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.Set;
 
 @Service
 public interface CalendarService {
 
-  List create();
+  Object saveEvent(final String eventId, final String title, final String externalTitle, final String start, final String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds,
+                  final String description, final  String externalDescription, final String location) throws JSONException, IOException;
+
+  Object updateEvent(final String eventId, final String title, final String externalTitle, final String start, final String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds,
+                   final String description, final  String externalDescription, final String location) throws JSONException, IOException;
+
+  Object checkAvailability(String email, final long start, final long end) throws IOException;
+
+  void deleteEvent(final String id) throws IOException;
+
 }
+

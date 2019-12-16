@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+        'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='com.auzmor.calendar.mappers.CalendarMapper'>
+
+    <resultMap id="EventAccountMap" type="com.auzmor.calendar.models.entities.Event">
+        <id column="id" jdbcType="INTEGER" property="id" javaType="java.lang.Integer"/>
+        <result column="uuid" jdbcType="VARCHAR" property="uuid"/>
+        <result column="object_id" jdbcType="VARCHAR" property="objectId"/>
+        <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
+        <result column="object_type" jdbcType="VARCHAR" property="objectType"/>
+        <result column="calendar_details" jdbcType="VARCHAR" property="calendarDetails"/>
+        <result column="event_id" jdbcType="VARCHAR" property="eventId"/>
+        <result column="timeZone" jdbcType="VARCHAR" property="timeZone"/>
+        <association property="account" column="account_id" resultMap="accountMap" javaType="com.auzmor.calendar.models.UserAccount" />
+    </resultMap>
+
+    <resultMap id="accountMap" type="com.auzmor.calendar.models.UserAccount">
+        <id property="uuid" column="account_id" jdbcType="INTEGER" javaType="java.lang.String"/>
+        <result column="nylas_account_id" jdbcType="VARCHAR" property="nylasAccountId"/>
+        <result column="nylas_token" jdbcType="VARCHAR" property="nylasToken"/>
+    </resultMap>
+
+    <update id='updateCursorIdByUserId' parameterType='String'>
+        UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
+        where user_id=#{userId}
+    </update>
+
+    <update id='updateCursorIdByEmail' parameterType='String'>
+        UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
+        where username=#{email}
+    </update>
+
+    <update id='deleteEvent' parameterType='String'>
+        UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, is_deleted=1
+        where event_id=#{id}
+    </update>
+
+    <select id='getCalendarIds' parameterType='String' resultType='java.util.HashMap'>
+        SELECT
+        event_type,
+        object_id
+        FROM calendar_details
+        where event_id=#{id} and is_deleted=0;
+    </select>
+
+    <select id='getDefaultTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
+        SELECT
+        nylas_token,
+        uuid,
+        user_id
+        FROM user_account
+        where username=#{email} and is_deleted=0;
+    </select>
+
+    <select id='getTokenByUserId' parameterType='String' resultType="String">
+        SELECT
+        nylas_token
+        FROM user_account
+        where user_id=#{userId} and is_deleted=0;
+    </select>
+    <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
+        <foreach item="item" index="index" collection="objectIds" separator="UNION">
+            SELECT cd.uuid, cd.object_id, cd.object_type,
+            cd.event_id, cd.calendar_details, cd.account_id,
+            cd.timeZone, ua.nylas_token, ua.nylas_account_id
+            FROM calendar_details cd
+            join user_account ua on ua.uuid = cd.account_id
+            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item})
+        </foreach>
+    </select>
+
+    <update id="updateEvents" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
+        </foreach>
+    </update>
+
+    <update id="updateListOfEvent" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE event_id = #{event.id}
+        </foreach>
+    </update>
+
+    <insert id="saveEvents" parameterType="java.util.List">
+        INSERT INTO calendar_details (
+        uuid, object_id, calendar_id, calendar_details, account_id, object_type, event_id, event_type, timezone)
+        VALUES
+        <foreach collection="events" item="event" index="index" open="(" separator="),("  close=")">
+            #{event.uuid}, #{event.objectId}, #{event.calendarId}, #{event.calendarDetails}, #{event.accountId},  #{event.objectType}, #{event.eventId},  #{event.eventType}, #{event.timeZone}
+        </foreach>
+    </insert>
+
+    <update id="updateListOfCursorIds" parameterType="java.util.List">
+        <foreach collection="events" item="event" index="index" separator=";" close=";">
+            UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{event.cursorId} where user_id=#{event.userId}
+        </foreach>
+    </update>
+</mapper>

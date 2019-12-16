@@ -3,8 +3,9 @@
 CREATE TABLE IF NOT EXISTS `user_account` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `username` varchar(100) NOT NULL UNIQUE,
-  `provider_name` varchar(255) DEFAULT NULL,
-  `refresh_token` varchar(255) DEFAULT NULL,
+  `provider_type` varchar(255) DEFAULT NULL,
+  `user_id` varchar(255) NOT NULL UNIQUE,
+  `provider_refresh_token` varchar(255) DEFAULT NULL,
   `nylas_token` varchar(255) DEFAULT NULL,
   `nylas_account_id` varchar(255) DEFAULT NULL,
   `cursor_id` varchar(255) DEFAULT NULL,

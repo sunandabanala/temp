@@ -25,7 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
   protected void configure(HttpSecurity http) throws Exception {
     http.cors().and().csrf().disable()
       .authorizeRequests()
-      .antMatchers( "/v2/api-docs", "swagger-ui.html", "/organization").permitAll();
+      .antMatchers( "/v2/api-docs", "swagger-ui.html", "/organization", "/webhook").permitAll();
     // .and()
     // .httpBasic();
   }
