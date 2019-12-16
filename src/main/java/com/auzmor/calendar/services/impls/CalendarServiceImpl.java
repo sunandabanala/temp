@@ -22,7 +22,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static com.auzmor.calendar.constants.Constant.DUMMY_EMAIL;
+import static com.auzmor.calendar.constants.DataConstants.DUMMY_EMAIL;
 import static com.auzmor.calendar.constants.NylasApiConstants.*;
 
 @Service

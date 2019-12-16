@@ -8,6 +8,6 @@ import org.apache.ibatis.annotations.Param;
 public interface AccountMapper {
   UserAccount getAccount(@Param("accountId")String accountId);
   void updateAccount(@Param("accountId") String accountId, @Param("cursorId") String cursorId);
-  void saveUserAccount(@Param("UserAccount") final UserAccount userAccount);
+  void saveUserAccount(@Param("userAccount") final UserAccount userAccount);
 
 }
