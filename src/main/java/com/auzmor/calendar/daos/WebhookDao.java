@@ -1,6 +1,5 @@
 package com.auzmor.calendar.daos;
 
-import com.auzmor.calendar.models.entities.Event;
 import org.springframework.stereotype.Component;
 
 @Component

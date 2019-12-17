@@ -9,13 +9,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserAccount extends Entity {
-  private String userName;
+  private String username;
   private String userId;
   private String providerType;
   private String refreshToken;
   private String nylasToken;
   private String nylasAccountId;
   private String cursorId;
-  private String uuid;
 
 }

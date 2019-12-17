@@ -22,8 +22,6 @@ import java.util.Map;
 @Component
 public class CalendarDaoImpl implements CalendarDao {
 
-  @Value("${default_email}")
-  private String defaultEmail;
   @Autowired
   CalendarMapper calendarMapper;
 
