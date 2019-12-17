@@ -7,6 +7,6 @@ public class DataConstants {
   public static final String DEFAULT_EMAIL_NYLAS_TOKEN = "CTqrrZr6HjBQlr0iUnGFUZ8VXQcbzZ";
   public static final String DUMMY_EMAIL =  UUID.randomUUID().toString().replace("-", "")+"@auzmor.com";
   public static final String PLATFORM_HOST = "platform_host";
-  public static final String DEFAULT_MAIL="auzmor-hire-events@auzmor.com";
+  public static final String DEFAULT_MAIL="mandeep@kovalent.io";
 
 }
