@@ -16,6 +16,5 @@ public class UserAccount extends Entity {
   private String nylasToken;
   private String nylasAccountId;
   private String cursorId;
-  private String uuid;
 
 }
