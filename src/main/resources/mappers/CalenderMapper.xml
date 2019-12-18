@@ -62,7 +62,7 @@
     </select>
     <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
         <foreach item="item" index="index" collection="objectIds" separator="UNION">
-            SELECT cd.uuid, cd.object_id, cd.object_type,
+            SELECT cd.uuid, cd.object_id, cd.object_type, cd.event_type,
             cd.event_id, cd.calendar_details, cd.account_id,
             cd.timeZone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd

@@ -5,7 +5,6 @@ import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.daos.WebhookDao;
 import com.auzmor.calendar.helpers.CalendarEvent;
-import com.auzmor.calendar.helpers.CalendarEventTime;
 import com.auzmor.calendar.helpers.CursorDiff;
 import com.auzmor.calendar.helpers.Delta;
 import com.auzmor.calendar.mappers.CalendarMapper;
@@ -13,8 +12,6 @@ import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -69,6 +66,7 @@ public class WebhookDaoImpl implements WebhookDao {
               CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
               c2.getWhen().setEnd_time(e2.getWhen().getEnd_time());
               c2.getWhen().setStart_time(e2.getWhen().getStart_time());
+              c2.setStatus(e2.getStatus());
               String eventStr = gson.toJson(c2, CalendarEvent.class);
               updateEvents = getEventsToUpdate(secondObjectId, eventStr, updateEvents);
               nylasApis = getNylasApiMap(secondObjectId, c2, objectDetailsMap.get(secondObjectId).getAccount().getNylasToken(), objectDetailsMap.get(secondObjectId).getCalendarId(), nylasApis);
@@ -118,6 +116,9 @@ public class WebhookDaoImpl implements WebhookDao {
     time.put("start_time", c.getWhen().getStart_time());
     time.put("end_time", c.getWhen().getEnd_time());
     Map<String, Object> map = new HashMap<>();
+    if (c.getStatus().equals("cancelled")) {
+      map.put("status", c.getStatus());
+    }
     map.put("when", time);
     nylasApi.put("when", map);
     nylasApi.put("token", token);

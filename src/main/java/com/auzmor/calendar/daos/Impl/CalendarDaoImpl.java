@@ -99,13 +99,27 @@ public class CalendarDaoImpl implements CalendarDao {
 
   public void updateNylasApis(List<Map> apis) {
     for (int i=0; i<apis.size(); i++) {
-      String url = NylasApiConstants.UPDATE_EVENT;
-      String updatedUrl = url.replace("{id}", apis.get(i).get("id").toString());
-      Map<String, Object> updateMap = new HashMap<>();
-      Gson json = new Gson();
-      String body = json.toJson(apis.get(i).get("when"));
-      ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(apis.get(i).get("token").toString(), body, updatedUrl, HttpMethod.PUT, String.class);
+      Map<String, Object> apiMap = (Map)apis.get(i).get("when");
+      if (apiMap.get("status").equals("cancelled")) {
+        deleteNylasEventApi(apis.get(i).get("id").toString(), apis.get(i).get("token").toString());
+      } else {
+        updateNylasEVentApi(apis.get(i).get("id").toString(), apis.get(i).get("token").toString(), apis.get(i).get("when"));
+      }
     }
+  }
+
+  private void deleteNylasEventApi(String id, String token) {
+    String url = NylasApiConstants.DELETE_EVENT;
+    String updatedUrl = url.replace("{id}", id);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, updatedUrl, HttpMethod.DELETE, String.class);
+  }
+
+  private void updateNylasEVentApi(String id, String token, Object timeObj) {
+    String url = NylasApiConstants.UPDATE_EVENT;
+    String updatedUrl = url.replace("{id}", id);
+    Gson json = new Gson();
+    String body = json.toJson(timeObj);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, body, updatedUrl, HttpMethod.PUT, String.class);
   }
 
   @Override
@@ -120,6 +134,7 @@ public class CalendarDaoImpl implements CalendarDao {
       event.put("description", calendarEvent.getDescription());
       event.put("location", calendarEvent.getLocation());
       event.put("timeZone", events.get(i).get("timeZone"));
+      event.put("status", calendarEvent.getStatus());
       String body = gson.toJson(event);
       String url = System.getenv(DataConstants.PLATFORM_HOST)+ApiConstants.PLATFORM_EVENT_API+"/"+events.get(i).get("id");
       RestTemplateUtil.restTemplateUtil(null, body, url, HttpMethod.PUT, String.class);
