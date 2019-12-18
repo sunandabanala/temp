@@ -71,13 +71,4 @@ public class CalendarController extends Controller {
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
 
-  @ApiOperation(value = "Add nylasAccount ")
-  @RequestMapping(value = "/addNylasAccount/", method = RequestMethod.POST)
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  // @PreAuthorize("@customSecurityService.hasPermission(authentication, '" + PermissionConstant.ADMIN_PERMISSION + "', '" + PermissionConstant.CREATE_CANDIDATE_PERMISSION + "')")
-  public ResponseEntity<Object> addNylasAccount(@RequestBody @Valid UserAccount account) throws Exception {
-    accountService.addNylasAccount(account);
-    return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
-  }
-
 }
