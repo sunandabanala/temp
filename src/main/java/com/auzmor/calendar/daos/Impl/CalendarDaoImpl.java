@@ -67,6 +67,11 @@ public class CalendarDaoImpl implements CalendarDao {
     return calendarIdsMap;
   }
 
+  public void updateCursorId(String cursorId, String userId) {
+    calendarMapper.updateCursorIdByUserId(userId, cursorId);
+  }
+
+  /*
   @Override
   public void updateCursorId(String cursorId, String defaultCursorId, String defaultUserId, String userId) {
     List<Map> updateCursors = new ArrayList<>();
@@ -83,6 +88,8 @@ public class CalendarDaoImpl implements CalendarDao {
 
     calendarMapper.updateListOfCursorIds(updateCursors);
   }
+
+   */
 
   public void updateEvents(List<Map> events) {
     if (!events.isEmpty()) {

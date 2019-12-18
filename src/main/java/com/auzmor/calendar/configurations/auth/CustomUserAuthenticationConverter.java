@@ -45,7 +45,7 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
       return new UsernamePasswordAuthenticationToken(
         new CustomPrincipal(uuid, firstName, lastName, email, country, mobile, type,
           getCustomOrganization((Map<String, ?>)map.get("organization")),
-          getRoles((List<Map<String, ?>>) map.get("roles")),token, accountId
+          getRoles((List<Map<String, ?>>) map.get("roles")),token
         ), null,
         getAuthorities(map)
       );

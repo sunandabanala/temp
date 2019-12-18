@@ -17,12 +17,14 @@ public interface CalendarDao {
 
   Map mapEvent(String id);
 
-  void updateCursorId(String cursorId, String defaultCursorId, String defaultUserId, String userId);
+ // void updateCursorId(String cursorId, String defaultCursorId, String defaultUserId, String userId);
 
   void updateEvents(List<Map> events);
 
   void updateNylasApis(List<Map> apiList);
 
   void updatePlatformEvents(List<Map> events);
+
+  void updateCursorId(String cursorId, String userId);
 
 }
