@@ -5,7 +5,6 @@ import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.daos.WebhookDao;
 import com.auzmor.calendar.helpers.CalendarEvent;
-import com.auzmor.calendar.helpers.CalendarEventTime;
 import com.auzmor.calendar.helpers.CursorDiff;
 import com.auzmor.calendar.helpers.Delta;
 import com.auzmor.calendar.mappers.CalendarMapper;
@@ -13,8 +12,6 @@ import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -62,15 +59,17 @@ public class WebhookDaoImpl implements WebhookDao {
             Gson gson = new Gson();
             CalendarEvent c = gson.fromJson(objectDetailsMap.get(calendarEventId).getCalendarDetails(), CalendarEvent.class);
             CalendarEvent e2 = events.get(calendarEventId);
-            updateEvents = getEventsToUpdate(calendarEventId, gson.toJson(e2), updateEvents);
-            platformUpdateEvents = getPlatformEventsToUpdate(objectDetailsMap.get(calendarEventId).getEventId(), c, objectDetailsMap.get(calendarEventId).getTimeZone(), platformUpdateEvents);
-            if (c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || !c.getLocation().equals(e2.getLocation())) {
+            int isDeleted = e2.getStatus().equals("cancelled") ? 1 : 0;
+            updateEvents = getEventsToUpdate(calendarEventId, gson.toJson(e2), updateEvents, isDeleted);
+            platformUpdateEvents = getPlatformEventsToUpdate(objectDetailsMap.get(calendarEventId).getEventId(), e2, objectDetailsMap.get(calendarEventId).getTimeZone(), platformUpdateEvents);
+            if (c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || !c.getLocation().equals(e2.getLocation()) || e2.getStatus().equals("cancelled")) {
               String secondObjectId = eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0).equals(calendarEventId) ? eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(1) : eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0) ;
               CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
               c2.getWhen().setEnd_time(e2.getWhen().getEnd_time());
               c2.getWhen().setStart_time(e2.getWhen().getStart_time());
+              c2.setStatus(e2.getStatus());
               String eventStr = gson.toJson(c2, CalendarEvent.class);
-              updateEvents = getEventsToUpdate(secondObjectId, eventStr, updateEvents);
+              updateEvents = getEventsToUpdate(secondObjectId, eventStr, updateEvents, isDeleted);
               nylasApis = getNylasApiMap(secondObjectId, c2, objectDetailsMap.get(secondObjectId).getAccount().getNylasToken(), objectDetailsMap.get(secondObjectId).getCalendarId(), nylasApis);
             }
           }
@@ -91,11 +90,12 @@ public class WebhookDaoImpl implements WebhookDao {
     return events;
   }
 
-  private List<Map> getEventsToUpdate(String id, String calendarDetails, List<Map> currentEventsToUpdate) {
+  private List<Map> getEventsToUpdate(String id, String calendarDetails, List<Map> currentEventsToUpdate, int isDeleted) {
     List<Map> newEventsToUpdate = currentEventsToUpdate;
     Map event = new HashMap();
     event.put("id", id);
     event.put("calendarDetails", calendarDetails);
+    event.put("isDeleted", isDeleted);
     newEventsToUpdate.add(event);
     return newEventsToUpdate;
   }
@@ -118,6 +118,9 @@ public class WebhookDaoImpl implements WebhookDao {
     time.put("start_time", c.getWhen().getStart_time());
     time.put("end_time", c.getWhen().getEnd_time());
     Map<String, Object> map = new HashMap<>();
+    if (c.getStatus().equals("cancelled")) {
+      map.put("status", c.getStatus());
+    }
     map.put("when", time);
     nylasApi.put("when", map);
     nylasApi.put("token", token);
