@@ -45,7 +45,7 @@
         where event_id=#{id} and is_deleted=0;
     </select>
 
-    <select id='getDefaultTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
+    <select id='getTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
         SELECT
         nylas_token,
         uuid,
