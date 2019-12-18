@@ -66,7 +66,7 @@
             cd.event_id, cd.calendar_details, cd.account_id,
             cd.timeZone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd
-            join user_account ua on ua.uuid = cd.account_id
+            LEFT JOIN user_account ua on ua.uuid = cd.account_id
             WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item})
         </foreach>
     </select>
