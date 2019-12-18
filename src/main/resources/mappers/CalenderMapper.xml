@@ -67,13 +67,13 @@
             cd.timeZone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd
             LEFT JOIN user_account ua on ua.uuid = cd.account_id
-            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item})
+            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item}) and cd.is_deleted = 0
         </foreach>
     </select>
 
     <update id="updateEvents" parameterType="java.util.List">
         <foreach collection="events" item="event" index="index" separator=";" close=";">
-            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails}, is_deleted = #{event.isDeleted} WHERE object_id = #{event.id}
         </foreach>
     </update>
 

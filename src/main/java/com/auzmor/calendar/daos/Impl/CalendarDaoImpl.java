@@ -100,7 +100,7 @@ public class CalendarDaoImpl implements CalendarDao {
   public void updateNylasApis(List<Map> apis) {
     for (int i=0; i<apis.size(); i++) {
       Map<String, Object> apiMap = (Map)apis.get(i).get("when");
-      if (apiMap.get("status").equals("cancelled")) {
+      if (apiMap.get("status") != null && apiMap.get("status").equals("cancelled")) {
         deleteNylasEventApi(apis.get(i).get("id").toString(), apis.get(i).get("token").toString());
       } else {
         updateNylasEVentApi(apis.get(i).get("id").toString(), apis.get(i).get("token").toString(), apis.get(i).get("when"));
