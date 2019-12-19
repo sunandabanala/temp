@@ -68,7 +68,19 @@ public class CalendarServiceImpl implements CalendarService {
       attendeeEmailList.add(attendee.getEmail());
     }
 
+    String candidateEmail=null;
+    Iterator iterator = guestEmails.iterator();
+    while(iterator.hasNext()) {
+      candidateEmail = (String) iterator.next();
+    }
+
     Map<String, Object> dummyRecruiter = new HashMap();
+    Map<String, Object> dummyCandidate = new HashMap();
+
+    dummyCandidate.put("email", DUMMY_EMAIL);
+    dummyCandidate.put("name", candidateEmail);
+    dummyCandidate.put("status", "yes");
+
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
@@ -195,7 +207,19 @@ public class CalendarServiceImpl implements CalendarService {
       attendeeEmailList.add(attendee.getEmail());
     }
 
+    String candidateEmail=null;
+    Iterator iterator = guestEmails.iterator();
+    while(iterator.hasNext()) {
+      candidateEmail = (String) iterator.next();
+    }
+
     Map<String, Object> dummyRecruiter = new HashMap();
+    Map<String, Object> dummyCandidate = new HashMap();
+
+    dummyCandidate.put("email", DUMMY_EMAIL);
+    dummyCandidate.put("name", candidateEmail);
+    dummyCandidate.put("status", "yes");
+
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
