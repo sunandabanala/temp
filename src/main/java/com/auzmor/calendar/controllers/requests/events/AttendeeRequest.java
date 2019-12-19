@@ -12,12 +12,12 @@ import javax.validation.constraints.NotNull;
 @ApiModel(description="Request object to create a new Event.")
 public class AttendeeRequest {
 
-  @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
+  @ApiModelProperty(notes="attendee email", required = true, example = "abc@auzmor.com")
+  @NotNull(message = "abc@auzmor.com")
   private String email;
 
-  @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
-  @NotNull(message = "Title cannot be null.")
+  @ApiModelProperty(notes="attendee uuid", required = true, example = "12345678912345678912345678912345")
+  @NotNull(message = "12345678912345678912345678912345")
   private String id;
 
 }

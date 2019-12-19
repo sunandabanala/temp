@@ -2,62 +2,143 @@ package com.auzmor.calendar.services.impls;
 
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.daos.CalendarDao;
-import com.auzmor.calendar.exceptions.DBException;
-import com.auzmor.calendar.exceptions.errors.Error;
-import com.auzmor.calendar.exceptions.errors.ErrorType;
+import com.auzmor.calendar.helpers.CalendarEvent;
 import com.auzmor.calendar.models.entities.Event;
+import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
+import com.auzmor.calendar.services.ApplicationContextService;
 import com.auzmor.calendar.services.CalendarService;
+import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.codec.binary.Base64;
+import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static com.auzmor.calendar.exceptions.errors.ErrorCode.E0000000;
+import static com.auzmor.calendar.constants.DataConstants.DUMMY_EMAIL;
+import static com.auzmor.calendar.constants.NylasApiConstants.*;
 
 @Service
 public class CalendarServiceImpl implements CalendarService {
 
   @Autowired
   CalendarDao calendarDao;
-  String nylse_token = "ER0CqAMebIF4y4svQzPX7DRGBhl7mD:";
+  @Autowired
+  private ApplicationContextService applicationContextService;
+
 
   @Override
-  public Event saveEvent(String title, String username, long start, long end, final Set<AttendeeRequest> attendeeIds, String description, String location, String type, String url) throws JSONException, IOException {
-    Set<String> emails = new HashSet<>();
-    emails.add(username);
-    Set<String> a = new HashSet<>();
-    String uuid = UUID.randomUUID().toString().replace("-", "");
-    HttpHeaders headers = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = nylse_token.getBytes();
-    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-    String base64Creds = new String(base64CredsBytes);
-    headers.add("Authorization", "Basic " + base64Creds);
-    //check slots
-    List<Error> errors = new ArrayList<>();
-    String calendar_Id = getCalendarId(username, base64Creds, restTemplate);
+  public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
+                         String externalDescription, String location) throws JSONException, IOException {
 
+    String defaultCalendarId;
+    String organizerCalendarId;
+    String timezone = getTimeZone(start);
+    String userId = applicationContextService.getCurrentUserId();
+    String accountId = applicationContextService.getAccountId();
+    String defaultUserId = applicationContextService.getDefaultUserId();
+    String defaultAccountId = applicationContextService.getDefaultAccountId();
+    String recruiterName = applicationContextService.getCurrentUsername();
+    String uuid = UUID.randomUUID().toString().replace("-", "");
+    String candidateUUID = UUID.randomUUID().toString().replace("-", "");
+
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
+
+
+    if(defaultToken.equals(organizerToken)) {
+      organizerCalendarId = getCalendarId(organizerToken);
+      defaultCalendarId = organizerCalendarId;
+    }else {
+      organizerCalendarId = getCalendarId(organizerToken);
+      defaultCalendarId = getCalendarId(defaultToken);
+    }
+
+    Set<String> attendeeEmailList = new HashSet<>();
+    for(AttendeeRequest attendee:attendeeIds) {
+      attendeeEmailList.add(attendee.getEmail());
+    }
+
+    Map<String, Object> dummyRecruiter = new HashMap();
+    dummyRecruiter.put("email", DUMMY_EMAIL);
+    dummyRecruiter.put("name", recruiterName);
+    dummyRecruiter.put("status", "yes");
+    JSONObject guestJson = calendardataJson(guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, location, dummyRecruiter);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, null);
+
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+
+    ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, null);
+
+
+    Gson gson = new Gson();
+    CalendarEvent calendarData = (CalendarEvent) response.getBody();
+    CalendarEvent candidateEventData = (CalendarEvent) candidateResponse.getBody();
+
+    Event event = new Event(calendarData.getId(), organizerCalendarId, accountId, gson.toJson(calendarData) , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
+    Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, gson.toJson(candidateEventData) , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
+    calendarDao.saveEvent(event,candidateEvent);
+    Map<String, Object> result = new HashMap();
+    result.put("response", "ok");
+    return result;
+  }
+
+  String getTimeZone(String start) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(start, DateTimeFormatter.ISO_DATE_TIME);
+    String timezone = TimeZone.getTimeZone(zonedDateTime.getZone().getId()).getID();
+    return timezone;
+  }
+
+  String getCursorId(String token) throws IOException {
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, FETCH_LATEST_CURSOR, HttpMethod.POST, String.class);
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode root = mapper.readTree(response.getBody().toString());
+    String cursorId = null;
+    if(response.getStatusCodeValue() != 200) {
+      return cursorId;
+    }
+    return root.get("cursor").asText();
+  }
+
+  void updateCursorId(String defaultToken, String organizerToken, String defaultUserId, String userId) throws IOException {
+    if(defaultToken.equals(organizerToken) || userId == null) {
+      String defaultCursorId = getCursorId(defaultToken);
+      calendarDao.updateCursorId(defaultCursorId, defaultUserId);
+    }else {
+      String organizerCursorId= getCursorId(organizerToken);
+      calendarDao.updateCursorId(organizerCursorId, userId);
+    }
+  }
+
+  JSONObject calendardataJson(Set<String> participants, String start, String end, String calendar_Id, String title, String description, String location,
+                              Map<String, Object> dummyRecruiter) {
+
+    long startTime = ZonedDateTime.parse(start).toInstant().getEpochSecond();
+    long endTime = ZonedDateTime.parse(end).toInstant().getEpochSecond();
     Map<String, Object> m = new HashMap();
     Map<String, Object> timeObject = new HashMap();
     Set<Map<String, Object>> participantsList = new HashSet<>();
-    for(AttendeeRequest email:attendeeIds) {
-      Map<String, Object> participants = new HashMap<>();
-      participants.put("email", email.getEmail());
-      participantsList.add(participants);
+    for(String email:participants) {
+      Map<String, Object> participant = new HashMap<>();
+      participant.put("email", email);
+      participantsList.add(participant);
     }
-    timeObject.put("start_time", Long.toString(start));
-    timeObject.put("end_time", Long.toString(end));
-    JSONObject personJsonObject = new JSONObject();
+    if(dummyRecruiter != null) {
+      participantsList.add(dummyRecruiter);
+    }
+    timeObject.put("start_time", startTime);
+    timeObject.put("end_time", endTime);
     m.put("calendar_id", calendar_Id);
     m.put("title", title);
     m.put("when",timeObject);
@@ -65,116 +146,94 @@ public class CalendarServiceImpl implements CalendarService {
     m.put("description",description);
     m.put("location", location);
     JSONObject json = new JSONObject(m);
-    HttpEntity<String> request = new HttpEntity<String>(json.toString(), headers);
-    ResponseEntity<String> response = restTemplate.postForEntity( "https://api.nylas.com/events?notify_participants=true", request , String.class );
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(response.getBody());
-    String calendarData = String.valueOf(root);
-    Event event = new Event(root.get("id").asText(), calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT);
-    calendarDao.saveEvent(event);
-    return null;
+    return json;
   }
 
-  String getCalendarId(String username, String base64Creds, RestTemplate restTemplate) throws IOException {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.add("Authorization", "Basic " + base64Creds);
-    HttpEntity<String> request = new HttpEntity<String>(headers);
-    ResponseEntity<String> response = restTemplate.exchange("https://api.nylas.com/calendars", HttpMethod.GET, request, String.class);
-    System.out.println(response.getBody());
+  String getCalendarId(String token) throws IOException {
+
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, FETCH_CALENDAR_ID, HttpMethod.GET, String.class);
     ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(response.getBody());
+    JsonNode root = mapper.readTree(response.getBody().toString());
     String calendar_Id=null;
-    System.out.println(response.getStatusCodeValue() == 200);
     if(response.getStatusCodeValue() != 200) {
       return calendar_Id;
     }
     for (Iterator<JsonNode> it = root.elements(); it.hasNext(); ) {
       JsonNode jsonNode = it.next();
-      System.out.println(jsonNode.get("name").asText());
-      System.out.println(username);
-      if(jsonNode.get("name").asText().equals(username)) {
+      if(jsonNode.get("object").asText().equals("calendar") && jsonNode.get("read_only").asText().equals("false")) {
         calendar_Id=jsonNode.get("id").asText();
+        break;
       }
     }
-    System.out.println("calendar_Id"+calendar_Id);
     return calendar_Id;
   }
 
-  public Event updateEvent(String id, String title, String username, long start, long end, final Set<AttendeeRequest> attendeeIds, String description, String location, String type, String url) throws JSONException, IOException {
-    String updateUrl = "https://api.nylas.com/events/{id}";
-    String newUpdateUrl  = updateUrl.replace("{id}", id);
-    System.out.println(updateUrl);
-    Set<String> emails = new HashSet<>();
-    emails.add(username);
-    Set<String> a = new HashSet<>();
-    String uuid = UUID.randomUUID().toString().replace("-", "");
-    HttpHeaders headers = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = nylse_token.getBytes();
-    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-    String base64Creds = new String(base64CredsBytes);
-    headers.add("Authorization", "Basic " + base64Creds);
-    //check slots
-    String calendar_Id = getCalendarId(username, base64Creds, restTemplate);
+  public Object updateEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds, String description,
+                           String externalDescription, String location) throws JSONException, IOException {
+    String default_calendar_Id;
+    String organizer_calendar_Id;
+    String userId = applicationContextService.getCurrentUserId();
+    String defaultUserId = applicationContextService.getDefaultUserId();
+    String recruiterName = applicationContextService.getCurrentUsername();
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
+    Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
+    String externalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
+    String internalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
 
-    Map<String, Object> m = new HashMap();
-    Map<String, Object> timeObject = new HashMap();
-    Set<Map<String, Object>> participantsList = new HashSet<>();
-    System.out.println(attendeeIds);
-    for(AttendeeRequest email:attendeeIds) {
-      Map<String, Object> participants = new HashMap<>();
-      participants.put("email", email.getEmail());
-      participantsList.add(participants);
+
+    if(defaultToken.equals(organizerToken)) {
+      organizer_calendar_Id = getCalendarId(organizerToken);
+      default_calendar_Id = organizer_calendar_Id;
+    }else {
+      organizer_calendar_Id = getCalendarId(organizerToken);
+      default_calendar_Id = getCalendarId(defaultToken);
     }
-    timeObject.put("start_time", Long.toString(start));
-    timeObject.put("end_time", Long.toString(end));
-    JSONObject personJsonObject = new JSONObject();
-    m.put("calendar_id", calendar_Id);
-    m.put("title", title);
-    m.put("when",timeObject);
-    m.put("participants",participantsList);
-    m.put("description",description);
-    m.put("location", location);
-    System.out.println("m"+m);
-    JSONObject json = new JSONObject(m);
-    System.out.println("json..."+json);
-    HttpEntity<String> request = new HttpEntity<String>(json.toString(), headers);
-    ResponseEntity<String> response = restTemplate.exchange( newUpdateUrl, HttpMethod.PUT, request , String.class );
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(response.getBody());
-    System.out.println("new..."+root.asText());
-    String calendarData = String.valueOf(root);
-    //check calendar
-    // ResponseEntity<String> response1 = restTemplate.exchange("https://api.nylas.com/calendars?notify_participants=true", HttpMethod.GET, request, String.class);
-    Event e1 = new Event(root.get("id").asText(), calendar_Id, "abc", calendarData , uuid, ObjectType.EVENT);
-    System.out.println(e1.getUuid());
-    calendarDao.updateEvent(id, calendarData);
-    return null;
+
+    Set<String> attendeeEmailList = new HashSet<>();
+    for(AttendeeRequest attendee:attendeeIds) {
+      attendeeEmailList.add(attendee.getEmail());
+    }
+
+    Map<String, Object> dummyRecruiter = new HashMap();
+    dummyRecruiter.put("email", DUMMY_EMAIL);
+    dummyRecruiter.put("name", recruiterName);
+    dummyRecruiter.put("status", "yes");
+    JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
+
+    ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT, CalendarEvent.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+
+    ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT, CalendarEvent.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, null);
+
+
+    Gson gson = new Gson();
+    CalendarEvent internalEventData = (CalendarEvent) internalResponse.getBody();
+    CalendarEvent externalEventData = (CalendarEvent)externalResponse.getBody();
+
+
+    calendarDao.updateEvent(eventId, gson.toJson(internalEventData), gson.toJson(externalEventData));
+    Map<String, Object> result = new HashMap();
+    result.put("response", "ok");
+    return result;
   }
 
   @Override
   public Object checkAvailability(String email, long start, long end) throws IOException {
-    HttpHeaders headers = new HttpHeaders();
     Set<String> emails = new HashSet<>();
     emails.add(email);
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = nylse_token.getBytes();
-    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-    String base64Creds = new String(base64CredsBytes);
-    headers.add("Authorization", "Basic " + base64Creds);
+    String organizerToken = applicationContextService.geToken();
     Map<String, Object> m = new HashMap();
-    JSONObject personJsonObject = new JSONObject();
     m.put("start_time", Long.toString(start));
     m.put("end_time", Long.toString(end));
     m.put("emails", emails);
     JSONObject json = new JSONObject(m);
-    HttpEntity<String> request = new HttpEntity<String>(json.toString(), headers);
-    ResponseEntity<String> response = restTemplate.postForEntity("https://api.nylas.com/calendars/free-busy", request, String.class);
+
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, json.toString(), CHECK_AVAILABILITY, HttpMethod.POST, String.class);
     ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readTree(response.getBody());
+    JsonNode root = mapper.readTree(response.getBody().toString());
     Map<String, Object> result = new HashMap();
     if (response.getStatusCodeValue() == 200 && root.get(0).get("time_slots").size() == 0) {
       result.put("Availability", true);
@@ -185,17 +244,23 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   @Override
-  public void deleteEvent(String id) {
-    String url = "https://api.nylas.com/events/{id}";
-    String newUpdateUrl  = url.replace("{id}", id);
-    HttpHeaders headers = new HttpHeaders();
-    RestTemplate restTemplate = new RestTemplate();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    byte[] plainCredsBytes = nylse_token.getBytes();
-    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-    String base64Creds = new String(base64CredsBytes);
-    headers.add("Authorization", "Basic " + base64Creds);
-    restTemplate.delete ( "https://api.nylas.com/calendars",  headers );
+  public void deleteEvent(String id) throws IOException {
+    String userId = applicationContextService.getCurrentUserId();
+    Map<String, String> calendarIdsMap = calendarDao.mapEvent(id);
+    String defaultUserId = applicationContextService.getDefaultUserId();
+    String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
+    String internalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
+
+    String organizerToken = applicationContextService.geToken();
+    String defaultToken = applicationContextService.getDefaultToken();
+
+    ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, null, internalEventUrl, HttpMethod.DELETE, String.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+
+    ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, null, externalEventUrl, HttpMethod.DELETE, String.class);
+    updateCursorId(defaultToken, organizerToken, defaultUserId, null);
+
+    calendarDao.deleteEvent(id);
   }
 
 }

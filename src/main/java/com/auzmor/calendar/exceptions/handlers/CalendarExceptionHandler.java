@@ -45,8 +45,6 @@ public class CalendarExceptionHandler extends ResponseEntityExceptionHandler {
     PersistenceException.class
   })
   public final ResponseEntity<Object> handleAllExceptions(Exception exception, WebRequest request) {
-    System.out.println(exception.getClass());
-    System.out.println("message"+exception.getMessage());
     logger.error("Exception--", exception.getCause());
     Error error = null;
     List<Error> errors = new ArrayList<>();
@@ -88,7 +86,6 @@ public class CalendarExceptionHandler extends ResponseEntityExceptionHandler {
     else if (exception instanceof HttpClientErrorException) {
       System.out.println(exception.getMessage());
       HttpClientErrorException ex = (HttpClientErrorException) exception;
-      System.out.println("mes.."+ex.getMessage());
       error = new Error(parseErrorMessage(ex), ErrorCode.E3000004, ErrorType.NOT_EXISTS);
       errors.add(error);
     }
