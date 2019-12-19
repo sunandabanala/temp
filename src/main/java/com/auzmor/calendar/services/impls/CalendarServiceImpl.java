@@ -84,8 +84,9 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
+
     JSONObject guestJson = calendardataJson(guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, location, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, null);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, dummyCandidate);
 
     ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
@@ -224,7 +225,7 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, dummyCandidate);
 
     ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
