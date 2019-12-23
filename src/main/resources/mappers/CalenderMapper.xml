@@ -54,6 +54,15 @@
         where username=#{email} and is_deleted=0;
     </select>
 
+    <select id='getTokenDataByUserId' parameterType='String' resultType='java.util.HashMap'>
+        SELECT
+        nylas_token,
+        uuid,
+        user_id
+        FROM user_account
+        where user_id=#{userId} and is_deleted=0;
+    </select>
+
     <select id='getTokenByUserId' parameterType='String' resultType="String">
         SELECT
         nylas_token
