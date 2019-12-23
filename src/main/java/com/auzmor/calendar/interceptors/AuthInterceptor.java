@@ -25,7 +25,7 @@ import static com.auzmor.calendar.constants.DataConstants.DEFAULT_MAIL;
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
-  private static final Logger logger = LoggerFactory.getLogger(CalendarExceptionHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(AuthInterceptor.class);
   @Autowired
   private ApplicationContextService applicationContextService;
 
@@ -51,17 +51,17 @@ public class AuthInterceptor implements HandlerInterceptor {
     Map<String,String> userTokenDataByEmail = calendarMapper.getTokenDataByUserId(userId);
     System.out.println(userTokenDataByEmail);
     if(nylasToken != null) {
-      logger.info("nylastoken: "+nylasToken);
+      logger.error("nylastoken: "+nylasToken);
       applicationContextService.setToken(nylasToken);
       applicationContextService.setAccountId(userTokenDataByEmail.get("uuid"));
     }else{
-      logger.info("userTokenDataByEmail: "+userId);
+      logger.error("userTokenDataByEmail: "+userId);
       if(userTokenDataByEmail == null) {
-        logger.info("userTokenDataByEmail first loop: "+userId);
+        logger.error("userTokenDataByEmail first loop: "+userId);
         userNylasToken = defaultTokenDataByEmail.get("nylas_token");
         userAccountId = defaultTokenDataByEmail.get("uuid");
       }else {
-        logger.info("userTokenDataByEmail second loop: ");
+        logger.error("userTokenDataByEmail second loop: ");
         userNylasToken = userTokenDataByEmail.get("nylas_token");
         userAccountId = userTokenDataByEmail.get("uuid");
       }
