@@ -43,7 +43,7 @@ public class WebhookDaoImpl implements WebhookDao {
       List<Map> updateEvents = new ArrayList<>();
       List nylasApis = new ArrayList();
       List<Map> platformUpdateEvents = new ArrayList<>();
-      if (!eventList.isEmpty()) {
+      if (eventList != null && !eventList.isEmpty()) {
         for (int i=0; i<eventList.size(); i++) {
           objectDetailsMap.put(eventList.get(i).getObjectId(), eventList.get(i));
           List<String> ids = new ArrayList<>();
@@ -62,7 +62,7 @@ public class WebhookDaoImpl implements WebhookDao {
             int isDeleted = e2.getStatus().equals("cancelled") ? 1 : 0;
             updateEvents = getEventsToUpdate(calendarEventId, gson.toJson(e2), updateEvents, isDeleted);
             platformUpdateEvents = getPlatformEventsToUpdate(objectDetailsMap.get(calendarEventId).getEventId(), e2, objectDetailsMap.get(calendarEventId).getTimeZone(), platformUpdateEvents);
-            if (c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || !c.getLocation().equals(e2.getLocation()) || e2.getStatus().equals("cancelled")) {
+            if (c != null && c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || !c.getLocation().equals(e2.getLocation()) || e2.getStatus().equals("cancelled")) {
               String secondObjectId = eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0).equals(calendarEventId) ? eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(1) : eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0) ;
               CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
               c2.getWhen().setEnd_time(e2.getWhen().getEnd_time());
