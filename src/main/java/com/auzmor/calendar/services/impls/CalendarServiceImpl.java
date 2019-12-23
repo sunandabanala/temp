@@ -79,7 +79,6 @@ public class CalendarServiceImpl implements CalendarService {
 
     dummyCandidate.put("email", DUMMY_EMAIL);
     dummyCandidate.put("name", candidateEmail);
-    dummyCandidate.put("status", "yes");
 
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
