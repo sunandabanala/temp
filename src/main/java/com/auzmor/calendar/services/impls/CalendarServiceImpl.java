@@ -68,12 +68,25 @@ public class CalendarServiceImpl implements CalendarService {
       attendeeEmailList.add(attendee.getEmail());
     }
 
+    String candidateEmail=null;
+    Iterator iterator = guestEmails.iterator();
+    while(iterator.hasNext()) {
+      candidateEmail = (String) iterator.next();
+    }
+
     Map<String, Object> dummyRecruiter = new HashMap();
+    Map<String, Object> dummyCandidate = new HashMap();
+
+    dummyCandidate.put("email", DUMMY_EMAIL);
+    dummyCandidate.put("name", candidateEmail);
+    dummyCandidate.put("status", "yes");
+
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
+
     JSONObject guestJson = calendardataJson(guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, location, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, null);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizerCalendarId, title, description, location, dummyCandidate);
 
     ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
@@ -195,12 +208,24 @@ public class CalendarServiceImpl implements CalendarService {
       attendeeEmailList.add(attendee.getEmail());
     }
 
+    String candidateEmail=null;
+    Iterator iterator = guestEmails.iterator();
+    while(iterator.hasNext()) {
+      candidateEmail = (String) iterator.next();
+    }
+
     Map<String, Object> dummyRecruiter = new HashMap();
+    Map<String, Object> dummyCandidate = new HashMap();
+
+    dummyCandidate.put("email", DUMMY_EMAIL);
+    dummyCandidate.put("name", candidateEmail);
+    dummyCandidate.put("status", "yes");
+
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     JSONObject guestJson = calendardataJson(guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, location, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, null);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, start, end, organizer_calendar_Id, title, description, location, dummyCandidate);
 
     ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);

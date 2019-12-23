@@ -5,16 +5,11 @@ import com.auzmor.calendar.constants.DataConstants;
 import com.auzmor.calendar.constants.NylasApiConstants;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.helpers.CalendarEvent;
-import com.auzmor.calendar.helpers.CalendarEventTime;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.utils.RestTemplateUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -140,5 +135,4 @@ public class CalendarDaoImpl implements CalendarDao {
       RestTemplateUtil.restTemplateUtil(null, body, url, HttpMethod.PUT, String.class);
     }
   }
-
 }
