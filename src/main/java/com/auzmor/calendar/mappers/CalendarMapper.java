@@ -15,6 +15,7 @@ public interface CalendarMapper {
   void deleteEvent(@Param("id") final String id);
   List<Map<String,String>> getCalendarIds(@Param("id") final String id);
   Map<String, String> getTokenDataByEmail(@Param("email") final String email);
+  Map<String, String> getTokenDataByUserId(@Param("userId") final String userId);
   List<Event> getEventsWithTokens(@Param("objectIds") final Set objectIds);
   void updateEvents(@Param("events") final List events);
   void saveEvents(@Param("events") final List events);
