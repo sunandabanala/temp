@@ -5,6 +5,8 @@ import com.auzmor.calendar.models.UserAccount;
 import com.auzmor.calendar.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -14,7 +16,7 @@ public class AccountServiceImpl implements AccountService {
   private AccountDao accountDao;
 
   @Override
-  public UserAccount getAccount(String nylasAccountId) {
+  public List<UserAccount> getAccount(String nylasAccountId) {
     return accountDao.getAccount(nylasAccountId);
   }
 
@@ -23,6 +25,11 @@ public class AccountServiceImpl implements AccountService {
     String uuid = UUID.randomUUID().toString().replace("-", "");
     userAccount.setUuid(uuid);
     accountDao.addNylasAccount(userAccount);
+  }
+
+  @Override
+  public void desync(String userId) {
+    accountDao.desync(userId);
   }
 
 }

@@ -3,11 +3,15 @@ package com.auzmor.calendar.services;
 import com.auzmor.calendar.models.UserAccount;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface AccountService {
 
-  UserAccount getAccount(String nylasAccountId);
+  List<UserAccount> getAccount(String nylasAccountId);
 
   void addNylasAccount(final UserAccount userAccount);
+
+  void desync(final String userId);
 
 }

@@ -2,8 +2,11 @@ package com.auzmor.calendar.interceptors;
 
 import com.auzmor.calendar.configurations.auth.CustomPrincipal;
 import com.auzmor.calendar.exceptions.DBException;
+import com.auzmor.calendar.exceptions.handlers.CalendarExceptionHandler;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.services.ApplicationContextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -22,6 +25,7 @@ import static com.auzmor.calendar.constants.DataConstants.DEFAULT_MAIL;
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
+  private static final Logger logger = LoggerFactory.getLogger(AuthInterceptor.class);
   @Autowired
   private ApplicationContextService applicationContextService;
 
@@ -45,14 +49,19 @@ public class AuthInterceptor implements HandlerInterceptor {
     String userAccountId=null;
     Map<String,String> defaultTokenDataByEmail=calendarMapper.getTokenDataByEmail(DEFAULT_MAIL);
     Map<String,String> userTokenDataByEmail = calendarMapper.getTokenDataByUserId(userId);
+    System.out.println(userTokenDataByEmail);
     if(nylasToken != null) {
+      logger.error("nylastoken: "+nylasToken);
       applicationContextService.setToken(nylasToken);
       applicationContextService.setAccountId(userTokenDataByEmail.get("uuid"));
     }else{
+      logger.error("userTokenDataByEmail: "+userId);
       if(userTokenDataByEmail == null) {
+        logger.error("userTokenDataByEmail first loop: "+userId);
         userNylasToken = defaultTokenDataByEmail.get("nylas_token");
         userAccountId = defaultTokenDataByEmail.get("uuid");
       }else {
+        logger.error("userTokenDataByEmail second loop: ");
         userNylasToken = userTokenDataByEmail.get("nylas_token");
         userAccountId = userTokenDataByEmail.get("uuid");
       }
