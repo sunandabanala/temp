@@ -22,4 +22,12 @@
       SELECT LAST_INSERT_ID() as id;
     </selectKey>
   </insert>
+
+  <update id='desyncUser' parameterType='String'>
+    UPDATE user_account
+    SET
+    updated_at=CURRENT_TIMESTAMP, is_active =0
+    WHERE user_id = #{userId} and is_active =1;
+  </update>
+
 </mapper>

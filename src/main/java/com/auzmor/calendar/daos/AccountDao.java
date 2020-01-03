@@ -10,6 +10,8 @@ public interface AccountDao {
   List<UserAccount> getAccount(String nylasAccountId);
   void updateAccount(String nylasAccountId, String cursorId);
 
-  void  addNylasAccount(final UserAccount userAccount);
+  void addNylasAccount(final UserAccount userAccount);
+
+  void desync(final String userId);
 
 }

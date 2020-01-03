@@ -12,4 +12,6 @@ public interface AccountService {
 
   void addNylasAccount(final UserAccount userAccount);
 
+  void desync(final String userId);
+
 }

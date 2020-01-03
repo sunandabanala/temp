@@ -52,6 +52,12 @@ public class WebhookController {
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
 
-
+  @ApiOperation(value = "Desync ")
+  @RequestMapping(value = "/desync/{userId}", method = RequestMethod.PUT)
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResponseEntity<Object> desync(@PathVariable(value = "userId") final String userId) throws Exception {
+    accountService.desync(userId);
+    return new ResponseEntity<>(new HttpHeaders(), HttpStatus.OK);
+  }
 
 }

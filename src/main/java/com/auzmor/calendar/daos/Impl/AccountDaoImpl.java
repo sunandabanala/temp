@@ -29,4 +29,8 @@ public class AccountDaoImpl implements AccountDao {
     accountMapper.saveUserAccount(userAccount);
   }
 
+  @Override
+  public void desync(String userId) {
+    accountMapper.desyncUser(userId);
+  }
 }
