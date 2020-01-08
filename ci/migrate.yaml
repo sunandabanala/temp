@@ -13,33 +13,13 @@ spec:
       - name: asia-gcr-io
       containers:
       - name: run
-        image: us.gcr.io/staging-auzmor/calendar-backend-liquibase:${CI_COMMIT_SHA}
+        image: us.gcr.io/staging-auzmor/calendar-backend-liquibase:83ba275f8a3660561e672bc7493d551802c316cf.2
         imagePullPolicy: Always
-        command: 
-          - sh
-          - "-c"
-          - |
-            /bin/bash <<'EOF'
-            liquibase --classpath=$LIQUIBASE_CLASSPATH \
-              --logLevel=$LIQUIBASE_LOGLEVEL \
-              --driver=$LIQUIBASE_DRIVER \
-              --url=$MYSQL_URI \
-              --username=$MYSQL_USERNAME \
-              --password=$MYSQL_PASSWORD \
-              --changeLogFile=$LIQUIBASE_CHANGE_LOG update
-            EOF
-        env:
-        - name: LIQUIBASE_CLASSPATH
-          value: /opt/jdbc/mysql-jdbc.jar
-        - name: LIQUIBASE_DRIVER
-          value: com.mysql.jdbc.Driver
-        - name: LIQUIBASE_CHANGE_LOG
-          value: /db/changelog-master.xml
-        - name: LIQUIBASE_LOGLEVEL
-          value: debug
         envFrom:
         - secretRef:
-            name: "${SECRET_NAME}"
+            name: calendar-secret
+        command: ["/bin/sh"]
+        args: ["-ec", "liquibase --classpath=/opt/jdbc/mysql-jdbc.jar --logLevel=debug --driver=com.mysql.jdbc.Driver --url=$MYSQL_URI --username=$MYSQL_USERNAME --password=$MYSQL_PASSWORD --changeLogFile=/db/changelog-master.xml update"]
       restartPolicy: Never
   backoffLimit: 1
 
