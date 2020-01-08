@@ -1,0 +1,45 @@
+## Kubernetes job to run after one-off migration command at the end of deployment
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: migrate-
+  labels:
+    app: calendar-backend
+    type: migrate
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: asia-gcr-io
+      containers:
+      - name: run
+        image: us.gcr.io/staging-auzmor/calendar-backend-liquibase:${CI_COMMIT_SHA}
+        imagePullPolicy: Always
+        command: 
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+            liquibase --classpath=$LIQUIBASE_CLASSPATH \
+              --logLevel=$LIQUIBASE_LOGLEVEL \
+              --driver=$LIQUIBASE_DRIVER \
+              --url=$MYSQL_URI \
+              --username=$MYSQL_USERNAME \
+              --password=$MYSQL_PASSWORD \
+              --changeLogFile=$LIQUIBASE_CHANGE_LOG update
+            EOF
+        env:
+        - name: LIQUIBASE_CLASSPATH
+          value: /opt/jdbc/mysql-jdbc.jar
+        - name: LIQUIBASE_DRIVER
+          value: com.mysql.jdbc.Driver
+        - name: LIQUIBASE_CHANGE_LOG
+          value: /db/changelog-master.xml
+        - name: LIQUIBASE_LOGLEVEL
+          value: debug
+        envFrom:
+        - secretRef:
+            name: "${SECRET_NAME}"
+      restartPolicy: Never
+  backoffLimit: 1
+

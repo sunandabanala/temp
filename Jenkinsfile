@@ -11,9 +11,13 @@ pipeline {
     }
   }
   environment {
-    project_id="asia.gcr.io/staging-auzmor"
+    project_id="us.gcr.io/staging-auzmor"
     artifact="calendar-backend"
+    liquibase_artifact="calendar-backend-liquibase"
     credentials_id="staging_auzmor"
+    project_id_harbor="$harbor_url/auzmor"
+    credentials_id_harbor="harbor-registry"
+    registry_url_harbor="http://$harbor_url"
   }
   options {
       buildDiscarder(logRotator(numToKeepStr:'10'))
@@ -33,24 +37,26 @@ pipeline {
                 version="${git_hash.trim()}.${env.BUILD_NUMBER}"
                 imageTag="${env.project_id}/${env.artifact}:${version}"
             }
+            container("docker") {
+                withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
+                    sh "docker pull ${env.project_id_harbor}/${env.artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                    sh "docker pull ${env.project_id_harbor}/${env.liquibase_artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                }
+            }
         }
     }
     stage('Build') {
         steps {
             container('docker') {
-                 script {
-                    withDockerRegistry(credentialsId: 'harbor-registry', url: 'https://harbor.cicd.auzmor.com') {
-                         sh "docker pull harbor.cicd.auzmor.com/auzmor/${artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
-                    }
-                    withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://asia.gcr.io') {
-                         sh "docker build --cache-from harbor.cicd.auzmor.com/auzmor/${artifact}:latest --tag harbor.cicd.auzmor.com/auzmor/${artifact}:latest ."
-                    }
-                    withDockerRegistry(credentialsId: 'harbor-registry', url: 'https://harbor.cicd.auzmor.com') {
-                         sh "docker tag harbor.cicd.auzmor.com/auzmor/${artifact}:latest ${imageTag}"
-                         sh "docker push harbor.cicd.auzmor.com/auzmor/${artifact}:latest"
-                         sh "docker tag harbor.cicd.auzmor.com/auzmor/${artifact}:latest  harbor.cicd.auzmor.com/auzmor/${artifact}:${version}"
-                         sh "docker push harbor.cicd.auzmor.com/auzmor/${artifact}:${version}"
-                    }
+                withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
+                     sh "docker build --cache-from ${env.project_id_harbor}/${env.artifact}:latest --tag ${env.project_id_harbor}/${env.artifact}:latest ."
+                     sh "docker tag ${env.project_id_harbor}/${env.artifact}:latest ${imageTag}"
+                     sh "docker build -f Dockerfile.liquibase --cache-from ${env.project_id_harbor}/${env.liquibase_artifact}:latest --tag ${env.project_id_harbor}/${env.liquibase_artifact}:latest ."
+                     sh "docker tag ${env.project_id_harbor}/${env.liquibase_artifact}:latest ${env.project_id}/${env.liquibase_artifact}:${version}"
+                }
+                withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
+                    sh "docker push ${env.project_id_harbor}/${env.artifact}:latest"
+                    sh "docker push ${env.project_id_harbor}/${env.liquibase_artifact}:latest"
                 }
             }
         }
@@ -59,8 +65,9 @@ pipeline {
         when { anyOf { branch 'develop'; branch 'staging'; branch 'master' } }
         steps {
             container("docker") {
-                withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://asia.gcr.io') {
+                withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
                     sh "docker push ${imageTag}"
+                    sh "docker push ${env.project_id}/${env.liquibase_artifact}:${version}"
                 }
             }
         }
@@ -70,7 +77,12 @@ pipeline {
             branch "develop"
         }
         steps {
-            deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development' ,deployment: 'calendar-backend', imageTag: imageTag
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "development", grep:"migrate"
+                println("Migration job succeeded")
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
         }
     }
     stage("Deploy Staging") {
@@ -78,7 +90,12 @@ pipeline {
             branch "staging"
         }
         steps {
-            deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging' ,deployment: 'calendar-backend', imageTag: imageTag
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "staging", grep:"migrate"
+                println("Migration job succeeded")
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
         }
     }
     stage("Manual Promotion") {
@@ -98,7 +115,12 @@ pipeline {
             branch 'master'
         }
         steps {
-            deployKubernetes credential_id: 'production', cluster_name: 'ats-prod-cluster', zone_name: 'us-central1-a', project_name: 'production-auzmor', namespace: 'production' ,deployment: 'calendar-backend', imageTag: imageTag
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "production", grep:"migrate"
+                println("Migration job succeeded")
+                deployKubernetes credential_id: 'production', cluster_name: 'ats-prod-cluster', zone_name: 'us-central1-a', project_name: 'production-auzmor', namespace: 'production' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
         }
     }
   }

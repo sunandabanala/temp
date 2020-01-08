@@ -1,0 +1,7 @@
+FROM kilna/liquibase-mysql
+Maintainer "DevOps" <dinesh@auzmor.com>
+ENV LIQUIBASE_CHANGELOG=/db/changelog-master.xml
+
+
+COPY ./src/main/resources/db /db
+
