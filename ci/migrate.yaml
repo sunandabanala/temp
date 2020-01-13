@@ -13,11 +13,11 @@ spec:
       - name: asia-gcr-io
       containers:
       - name: run
-        image: us.gcr.io/staging-auzmor/calendar-backend-liquibase:83ba275f8a3660561e672bc7493d551802c316cf.2
+        image: us.gcr.io/staging-auzmor/calendar-backend-liquibase:${CI_COMMIT_SHA}
         imagePullPolicy: Always
         envFrom:
         - secretRef:
-            name: calendar-secret
+            name: "${SECRET_NAME}"
         command: ["/bin/sh"]
         args: ["-ec", "liquibase --classpath=/opt/jdbc/mysql-jdbc.jar --logLevel=debug --driver=com.mysql.jdbc.Driver --url=$MYSQL_URI --username=$MYSQL_USERNAME --password=$MYSQL_PASSWORD --changeLogFile=/db/changelog-master.xml update"]
       restartPolicy: Never
