@@ -11,5 +11,6 @@ public interface AccountMapper {
   List<UserAccount> getAccount(@Param("accountId")String accountId);
   void updateAccount(@Param("accountId") String accountId, @Param("cursorId") String cursorId);
   void saveUserAccount(@Param("userAccount") final UserAccount userAccount);
+  void desyncUser(@Param("userId")String userId);
 
 }

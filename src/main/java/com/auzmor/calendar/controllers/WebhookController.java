@@ -52,6 +52,4 @@ public class WebhookController {
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
 
-
-
 }

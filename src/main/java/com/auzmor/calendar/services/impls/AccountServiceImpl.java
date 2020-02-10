@@ -27,4 +27,9 @@ public class AccountServiceImpl implements AccountService {
     accountDao.addNylasAccount(userAccount);
   }
 
+  @Override
+  public void desync(String userId) {
+    accountDao.desync(userId);
+  }
+
 }
