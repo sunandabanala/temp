@@ -51,7 +51,7 @@
         uuid,
         user_id
         FROM user_account
-        where username=#{email} and is_deleted=0;
+        where username=#{email} and is_deleted=0 and is_active =1;
     </select>
 
     <select id='getTokenDataByUserId' parameterType='String' resultType='java.util.HashMap'>
@@ -60,14 +60,14 @@
         uuid,
         user_id
         FROM user_account
-        where user_id=#{userId} and is_deleted=0;
+        where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
 
     <select id='getTokenByUserId' parameterType='String' resultType="String">
         SELECT
         nylas_token
         FROM user_account
-        where user_id=#{userId} and is_deleted=0;
+        where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
     <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
         <foreach item="item" index="index" collection="objectIds" separator="UNION">
@@ -76,7 +76,7 @@
             cd.timezone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd
             LEFT JOIN user_account ua on ua.uuid = cd.account_id
-            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item}) and cd.is_deleted = 0
+            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item}) and cd.is_deleted = 0 and ua.is_active =1;
         </foreach>
     </select>
 
