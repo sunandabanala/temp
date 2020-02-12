@@ -49,7 +49,6 @@ public class AuthInterceptor implements HandlerInterceptor {
     String userAccountId=null;
     Map<String,String> defaultTokenDataByEmail=calendarMapper.getTokenDataByEmail(DEFAULT_MAIL);
     Map<String,String> userTokenDataByEmail = calendarMapper.getTokenDataByUserId(userId);
-    System.out.println(userTokenDataByEmail);
     if(nylasToken != null) {
       logger.error("nylastoken: "+nylasToken);
       applicationContextService.setToken(nylasToken);
@@ -68,6 +67,7 @@ public class AuthInterceptor implements HandlerInterceptor {
       applicationContextService.setToken(userNylasToken);
       applicationContextService.setAccountId(userAccountId);
     }
+    
     applicationContextService.setCurrentUsername(username);
     applicationContextService.setCurrentUserId(userId);
     applicationContextService.setDefaultToken(defaultTokenDataByEmail.get("nylas_token"));
