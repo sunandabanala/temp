@@ -12,7 +12,7 @@ pipeline {
   }
   environment {
     project_id="us.gcr.io/staging-auzmor"
-    artifact="calendar"
+    artifact="calendar-backend"
     liquibase_artifact="calendar-backend-liquibase"
     credentials_id="staging_auzmor"
     project_id_harbor="$harbor_url/auzmor"
