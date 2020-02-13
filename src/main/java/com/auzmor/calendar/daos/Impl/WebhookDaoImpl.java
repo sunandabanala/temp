@@ -37,11 +37,12 @@ public class WebhookDaoImpl implements WebhookDao {
 
   @Override
   public void handleWebhook(String cursorId, String token, String accountId) throws Exception {
-    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId, HttpMethod.GET, CursorDiff.class);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId+"&include_types=event", HttpMethod.GET, CursorDiff.class);
     CursorDiff cursorDiff = (CursorDiff) response.getBody();
     if (!cursorId.equals(cursorDiff.getCursor_end())) {
       Map<String, CalendarEvent> events = processDeltas(cursorDiff.getDeltas());
       Set<String> calendarEventIds = events.keySet();
+      calendarEventIds.removeIf(id -> (id == null));
       try {
         List<Event> eventList = calendarMapper.getEventsWithTokens(calendarEventIds);
         Map<String, List<String>> eventObjectMap = new HashMap<>();
@@ -84,6 +85,7 @@ public class WebhookDaoImpl implements WebhookDao {
           updateDB(updateEvents, nylasApis, platformUpdateEvents, accountId, cursorDiff.getCursor_end());
         }
       } catch(Exception exception) {
+        System.out.println(exception.getStackTrace());
         logger.error("Unable to read events from webhook: " +exception.getMessage());
       }
     }
