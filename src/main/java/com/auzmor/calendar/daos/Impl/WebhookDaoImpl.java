@@ -4,6 +4,7 @@ import com.auzmor.calendar.constants.NylasApiConstants;
 import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.daos.WebhookDao;
+import com.auzmor.calendar.exceptions.handlers.CalendarExceptionHandler;
 import com.auzmor.calendar.helpers.CalendarEvent;
 import com.auzmor.calendar.helpers.CursorDiff;
 import com.auzmor.calendar.helpers.Delta;
@@ -12,6 +13,8 @@ import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -20,6 +23,8 @@ import java.util.*;
 
 @Component
 public class WebhookDaoImpl implements WebhookDao {
+
+  private static final Logger logger = LoggerFactory.getLogger(WebhookDaoImpl.class);
 
   @Autowired
   private AccountDao accountDao;
@@ -32,50 +37,56 @@ public class WebhookDaoImpl implements WebhookDao {
 
   @Override
   public void handleWebhook(String cursorId, String token, String accountId) throws Exception {
-    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId, HttpMethod.GET, CursorDiff.class);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId+"&include_types=event", HttpMethod.GET, CursorDiff.class);
     CursorDiff cursorDiff = (CursorDiff) response.getBody();
     if (!cursorId.equals(cursorDiff.getCursor_end())) {
       Map<String, CalendarEvent> events = processDeltas(cursorDiff.getDeltas());
       Set<String> calendarEventIds = events.keySet();
-      List<Event> eventList = calendarMapper.getEventsWithTokens(calendarEventIds);
-      Map<String, List<String>> eventObjectMap = new HashMap<>();
-      Map<String, Event> objectDetailsMap = new HashMap();
-      List<Map> updateEvents = new ArrayList<>();
-      List nylasApis = new ArrayList();
-      List<Map> platformUpdateEvents = new ArrayList<>();
-      if (eventList != null && !eventList.isEmpty()) {
-        for (int i=0; i<eventList.size(); i++) {
-          objectDetailsMap.put(eventList.get(i).getObjectId(), eventList.get(i));
-          List<String> ids = new ArrayList<>();
-          if (eventObjectMap.containsKey(eventList.get(i).getEventId())) {
-            ids = eventObjectMap.get(eventList.get(i).getEventId());
+      calendarEventIds.removeIf(id -> (id == null));
+      try {
+        List<Event> eventList = calendarMapper.getEventsWithTokens(calendarEventIds);
+        Map<String, List<String>> eventObjectMap = new HashMap<>();
+        Map<String, Event> objectDetailsMap = new HashMap();
+        List<Map> updateEvents = new ArrayList<>();
+        List nylasApis = new ArrayList();
+        List<Map> platformUpdateEvents = new ArrayList<>();
+        if (eventList != null && !eventList.isEmpty()) {
+          for (int i = 0; i < eventList.size(); i++) {
+            objectDetailsMap.put(eventList.get(i).getObjectId(), eventList.get(i));
+            List<String> ids = new ArrayList<>();
+            if (eventObjectMap.containsKey(eventList.get(i).getEventId())) {
+              ids = eventObjectMap.get(eventList.get(i).getEventId());
+            }
+            ids.add(eventList.get(i).getObjectId());
+            eventObjectMap.put(eventList.get(i).getEventId(), ids);
           }
-          ids.add(eventList.get(i).getObjectId());
-          eventObjectMap.put(eventList.get(i).getEventId(), ids);
-        }
 
-        for (String calendarEventId: calendarEventIds) {
-          if (objectDetailsMap.containsKey(calendarEventId) && objectDetailsMap.get(calendarEventId).getEventType() == EventType.INTERNAL) {
-            Gson gson = new Gson();
-            CalendarEvent c = gson.fromJson(objectDetailsMap.get(calendarEventId).getCalendarDetails(), CalendarEvent.class);
-            CalendarEvent e2 = events.get(calendarEventId);
-            int isDeleted = e2.getStatus().equals("cancelled") ? 1 : 0;
-            updateEvents = getEventsToUpdate(calendarEventId, gson.toJson(e2), updateEvents, isDeleted);
-            platformUpdateEvents = getPlatformEventsToUpdate(objectDetailsMap.get(calendarEventId).getEventId(), e2, objectDetailsMap.get(calendarEventId).getTimeZone(), platformUpdateEvents);
-            Boolean locationUpdated = (e2.getLocation() != null && c.getLocation() == null) || (e2.getLocation() != null && c.getLocation() != null && !(c.getLocation().equals(e2.getLocation())));
-            if (c != null && c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || locationUpdated || e2.getStatus().equals("cancelled")) {
-              String secondObjectId = eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0).equals(calendarEventId) ? eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(1) : eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0) ;
-              CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
-              c2.getWhen().setEnd_time(e2.getWhen().getEnd_time());
-              c2.getWhen().setStart_time(e2.getWhen().getStart_time());
-              c2.setStatus(e2.getStatus());
-              String eventStr = gson.toJson(c2, CalendarEvent.class);
-              updateEvents = getEventsToUpdate(secondObjectId, eventStr, updateEvents, isDeleted);
-              nylasApis = getNylasApiMap(secondObjectId, c2, objectDetailsMap.get(secondObjectId).getAccount().getNylasToken(), objectDetailsMap.get(secondObjectId).getCalendarId(), nylasApis);
+          for (String calendarEventId : calendarEventIds) {
+            if (objectDetailsMap.containsKey(calendarEventId) && objectDetailsMap.get(calendarEventId).getEventType() == EventType.INTERNAL) {
+              Gson gson = new Gson();
+              CalendarEvent c = gson.fromJson(objectDetailsMap.get(calendarEventId).getCalendarDetails(), CalendarEvent.class);
+              CalendarEvent e2 = events.get(calendarEventId);
+              int isDeleted = e2.getStatus().equals("cancelled") ? 1 : 0;
+              updateEvents = getEventsToUpdate(calendarEventId, gson.toJson(e2), updateEvents, isDeleted);
+              platformUpdateEvents = getPlatformEventsToUpdate(objectDetailsMap.get(calendarEventId).getEventId(), e2, objectDetailsMap.get(calendarEventId).getTimeZone(), platformUpdateEvents);
+              Boolean locationUpdated = (e2.getLocation() != null && c.getLocation() == null) || (e2.getLocation() != null && c.getLocation() != null && !(c.getLocation().equals(e2.getLocation())));
+              if (c != null && c.getWhen().getEnd_time() != e2.getWhen().getEnd_time() || c.getWhen().getStart_time() != e2.getWhen().getStart_time() || locationUpdated || e2.getStatus().equals("cancelled")) {
+                String secondObjectId = eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0).equals(calendarEventId) ? eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(1) : eventObjectMap.get(objectDetailsMap.get(calendarEventId).getEventId()).get(0);
+                CalendarEvent c2 = gson.fromJson(objectDetailsMap.get(secondObjectId).getCalendarDetails(), CalendarEvent.class);
+                c2.getWhen().setEnd_time(e2.getWhen().getEnd_time());
+                c2.getWhen().setStart_time(e2.getWhen().getStart_time());
+                c2.setStatus(e2.getStatus());
+                String eventStr = gson.toJson(c2, CalendarEvent.class);
+                updateEvents = getEventsToUpdate(secondObjectId, eventStr, updateEvents, isDeleted);
+                nylasApis = getNylasApiMap(secondObjectId, c2, objectDetailsMap.get(secondObjectId).getAccount().getNylasToken(), objectDetailsMap.get(secondObjectId).getCalendarId(), nylasApis);
+              }
             }
           }
+          updateDB(updateEvents, nylasApis, platformUpdateEvents, accountId, cursorDiff.getCursor_end());
         }
-         updateDB(updateEvents, nylasApis, platformUpdateEvents, accountId, cursorDiff.getCursor_end());
+      } catch(Exception exception) {
+        System.out.println(exception.getStackTrace());
+        logger.error("Unable to read events from webhook: " +exception.getMessage());
       }
     }
   }

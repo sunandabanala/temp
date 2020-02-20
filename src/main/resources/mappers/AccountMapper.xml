@@ -7,7 +7,7 @@
   <select id="getAccount" parameterType="String" resultType='com.auzmor.calendar.models.UserAccount'>
     SELECT uuid, username, provider_type as providerName,
     provider_refresh_token as refreshToken, nylas_token as nylasToken, nylas_account_id AS nylasAccountId, cursor_id AS cursorId
-    from user_account where nylas_account_id = #{accountId}
+    from user_account where nylas_account_id = #{accountId} and is_active =1;
   </select>
 
   <update id='updateAccount' parameterType='String'>
@@ -18,6 +18,7 @@
   <insert id="saveUserAccount" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO user_account(username, provider_type, user_id, provider_refresh_token, nylas_token, nylas_account_id, cursor_id, uuid)
     VALUES(#{userAccount.username}, #{userAccount.providerType}, #{userAccount.userId}, #{userAccount.refreshToken}, #{userAccount.nylasToken}, #{userAccount.nylasAccountId}, #{userAccount.cursorId}, #{userAccount.uuid})
+    ON DUPLICATE KEY UPDATE user_id = #{userAccount.userId}, is_active=1
     <selectKey keyProperty="id" keyColumn="id" resultType="int">
       SELECT LAST_INSERT_ID() as id;
     </selectKey>
