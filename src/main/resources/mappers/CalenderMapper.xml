@@ -70,14 +70,19 @@
         where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
     <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
-        <foreach item="item" index="index" collection="objectIds" separator="UNION">
             SELECT cd.uuid, cd.object_id, cd.object_type, cd.event_type,
             cd.event_id, cd.calendar_details, cd.account_id,
             cd.timezone, ua.nylas_token, ua.nylas_account_id
             FROM calendar_details cd
             LEFT JOIN user_account ua on ua.uuid = cd.account_id
-            WHERE cd.event_id IN (Select event_id from calendar_details c where c.object_id = #{item}) and cd.is_deleted = 0 and ua.is_active =1;
-        </foreach>
+            WHERE cd.event_id IN
+            (
+            Select event_id from calendar_details c where c.object_id IN (
+            <foreach item="item" index="index" collection="objectIds" separator=",">
+                #{item}
+             </foreach>
+            )
+            ) and cd.is_deleted = 0 and ua.is_active =1;
     </select>
 
     <update id="updateEvents" parameterType="java.util.List">
