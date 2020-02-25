@@ -128,7 +128,7 @@ public class CalendarDaoImpl implements CalendarDao {
       event.put("title", calendarEvent.getTitle());
       event.put("description", calendarEvent.getDescription());
       event.put("location", calendarEvent.getLocation());
-      event.put("timeZone", events.get(i).get("timezone"));
+      event.put("timeZone", events.get(i).get("timeZone"));
       event.put("status", calendarEvent.getStatus());
       String body = gson.toJson(event);
       String url = System.getenv(DataConstants.PLATFORM_HOST)+ApiConstants.PLATFORM_EVENT_API+"/"+events.get(i).get("id");
