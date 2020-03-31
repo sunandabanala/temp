@@ -62,7 +62,7 @@ pipeline {
         }
     }
     stage("Push") {
-        when { anyOf { branch 'develop'; branch 'staging'; branch 'master' } }
+        when { anyOf { branch 'develop'; branch: 'qa'; branch 'staging'; branch 'master' } }
         steps {
             container("docker") {
                 withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
