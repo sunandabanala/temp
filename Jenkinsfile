@@ -85,6 +85,19 @@ pipeline {
             }
         }
     }
+    stage("Deploy QA") {
+        when {
+            branch "qa"
+        }
+        steps {
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "qa", grep:"migrate"
+                println("Migration job succeeded")
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
+        }
+    }
     stage("Deploy Staging") {
         when {
             branch "staging"
