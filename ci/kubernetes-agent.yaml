@@ -15,6 +15,13 @@ spec:
   - image: "docker"
     imagePullPolicy: "IfNotPresent"
     name: "docker"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "512m"
+      limits:
+        memory: "512Mi"
+        cpu: "512m"
     tty: true
     volumeMounts:
     - mountPath: "/var/run/docker.sock"
