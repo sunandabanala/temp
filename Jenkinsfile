@@ -61,7 +61,7 @@ pipeline {
         }
     }
     stage("Push") {
-        when { anyOf { branch 'develop'; branch 'staging'; branch 'master' } }
+        when { anyOf { branch 'develop'; branch 'qa'; branch 'staging'; branch 'master' } }
         steps {
             container("docker") {
                 withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
@@ -90,6 +90,19 @@ pipeline {
                 println("Migration job succeeded")
                 println("Deploying to ${env.cluster}...") 
                 deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
+            }
+        }
+    }
+    stage("Deploy QA") {
+        when {
+            branch "qa"
+        }
+        steps {
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "qa", grep:"migrate"
+                println("Migration job succeeded")
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa' ,deployment: 'calendar-backend', imageTag: imageTag
             }
         }
     }
