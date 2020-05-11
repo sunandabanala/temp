@@ -15,9 +15,9 @@ pipeline {
     artifact="calendar-backend"
     liquibase_artifact="calendar-backend-liquibase"
     credentials_id="staging_auzmor"
-    project_id_harbor="$harbor_url/auzmor"
+    project_id_harbor="$registry_url/auzmor"
     credentials_id_harbor="harbor-registry"
-    registry_url_harbor="http://$harbor_url"
+    registry_url_harbor="http://$registry_url"
   }
   options {
       buildDiscarder(logRotator(numToKeepStr:'10'))
@@ -76,12 +76,27 @@ pipeline {
         when {
             branch "develop"
         }
+        environment {
+            GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+        }
         steps {
             container("gcloud") {
                 deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
                 utility check: "jobs", namespace: "development", grep:"migrate"
                 println("Migration job succeeded")
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
+            container('tools') {
+              withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                script {
+                    env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
+                }
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh "git config --global user.email 'ci@auzmor.com'"
+                dir("k8s") {
+                    sh "cd ./microservices/calendar/development && kustomize edit set image ${imageTag}"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                }
+              } 
             }
         }
     }
@@ -89,12 +104,27 @@ pipeline {
         when {
             branch "qa"
         }
+        environment {
+            GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+        }
         steps {
             container("gcloud") {
                 deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
                 utility check: "jobs", namespace: "qa", grep:"migrate"
                 println("Migration job succeeded")
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
+            container('tools') {
+              withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                script {
+                    env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
+                }
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh "git config --global user.email 'ci@auzmor.com'"
+                dir("k8s") {
+                    sh "cd ./microservices/calendar/qa && kustomize edit set image ${imageTag}"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                }
+              } 
             }
         }
     }
@@ -102,12 +132,28 @@ pipeline {
         when {
             branch "staging"
         }
+        environment {
+            GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+        }
         steps {
             container("gcloud") {
                 deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
                 utility check: "jobs", namespace: "staging", grep:"migrate"
                 println("Migration job succeeded")
                 deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging' ,deployment: 'calendar-backend', imageTag: imageTag
+            }
+            container('tools') {
+              withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                script {
+                    env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
+                }
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh "git config --global user.email 'ci@auzmor.com'"
+                dir("k8s") {
+                    sh "cd ./microservices/calendar/qa && kustomize edit set image ${imageTag}"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                }
+              } 
             }
         }
     }
