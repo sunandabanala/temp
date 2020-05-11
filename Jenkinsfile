@@ -150,7 +150,7 @@ pipeline {
                 sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
                 dir("k8s") {
-                    sh "cd ./microservices/calendar/qa && kustomize edit set image ${imageTag}"
+                    sh "cd ./microservices/calendar/staging && kustomize edit set image ${imageTag}"
                     sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
                 }
               } 
