@@ -76,7 +76,7 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
   private Set<CustomPermission> getPermissions(List<Map<String, ?>> list) {
     Set<CustomPermission> permissions = new HashSet<>();
     for (Map<String, ?> map: list) {
-      CustomPermission permission = new CustomPermission(map.get("uuid").toString(), map.get("name").toString());
+      CustomPermission permission = new CustomPermission( map.get("name").toString());
       permissions.add(permission);
     }
     return permissions;

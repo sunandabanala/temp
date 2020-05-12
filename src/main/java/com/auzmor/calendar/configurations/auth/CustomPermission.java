@@ -10,6 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomPermission {
-  private String uuid;
+//  private String uuid;
   private String name;
 }
