@@ -20,9 +20,8 @@ pipeline {
     registry_url_harbor="http://$registry_url"
   }
   options {
-      buildDiscarder(logRotator(numToKeepStr:'10'))
-      disableConcurrentBuilds()
-      timeout(time: 15, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr:'10'))
+    disableConcurrentBuilds()
   }
   stages {
     stage("Start") {
@@ -39,8 +38,8 @@ pipeline {
             }
             container("docker") {
                 withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
-                    sh "docker pull ${env.project_id_harbor}/${env.artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
-                    sh "docker pull ${env.project_id_harbor}/${env.liquibase_artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                sh "docker pull ${env.project_id_harbor}/${env.artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                sh "docker pull ${env.project_id_harbor}/${env.liquibase_artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
                 }
             }
         }
@@ -55,8 +54,8 @@ pipeline {
                      sh "docker tag ${env.project_id_harbor}/${env.liquibase_artifact}:latest ${env.project_id}/${env.liquibase_artifact}:${version}"
                 }
                 withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
-                    sh "docker push ${env.project_id_harbor}/${env.artifact}:latest"
-                    sh "docker push ${env.project_id_harbor}/${env.liquibase_artifact}:latest"
+                 sh "docker push ${env.project_id_harbor}/${env.artifact}:latest"
+                 sh "docker push ${env.project_id_harbor}/${env.liquibase_artifact}:latest"
                 }
             }
         }
@@ -81,8 +80,9 @@ pipeline {
         }
         steps {
             container("gcloud") {
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'development', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
-                utility check: "jobs", namespace: "development", grep:"migrate"
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
                 println("Migration job succeeded")
             }
             container('tools') {
@@ -137,10 +137,12 @@ pipeline {
         }
         steps {
             container("gcloud") {
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
-                utility check: "jobs", namespace: "staging", grep:"migrate"
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
                 println("Migration job succeeded")
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging' ,deployment: 'calendar-backend', imageTag: imageTag
+                println("Deploying to ${env.cluster}...") 
+                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
             }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
@@ -162,10 +164,13 @@ pipeline {
             branch 'master'
         }
         steps {
+            // we need a first milestone step so that all jobs entering this stage are tracked an can be aborted if needed
             milestone(1)
+            // time out manual approval after ten minutes
             timeout(time: 10, unit: 'MINUTES') {
                 input message: "Does Staging/ Sandbox look good?"
             }
+            // this will kill any job which is still in the input step
             milestone(2)
         }
     }
@@ -173,12 +178,21 @@ pipeline {
         when {
             branch 'master'
         }
+        environment {
+            cluster="ats-prod-cluster"
+            zone="us-central1-a"
+            project="production-auzmor"
+            namespace="production"
+            cred_id="production"
+        }
         steps {
             container("gcloud") {
-                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'staging', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
-                utility check: "jobs", namespace: "production", grep:"migrate"
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
                 println("Migration job succeeded")
-                deployKubernetes credential_id: 'production', cluster_name: 'ats-prod-cluster', zone_name: 'us-central1-a', project_name: 'production-auzmor', namespace: 'production' ,deployment: 'calendar-backend', imageTag: imageTag
+                println("Deploying to ${env.cluster}...") 
+                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
             }
         }
     }
