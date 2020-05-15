@@ -1,49 +1,66 @@
 spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: cloud.google.com/gke-preemptible
+            operator: In
+            values:
+            - "true"
   containers:
   - image: "medineshkatwal/gcloud"
     imagePullPolicy: "IfNotPresent"
     name: "gcloud"
     tty: true
     volumeMounts:
-    - mountPath: "/var/run/docker.sock"
-      name: "volume-0"
-      readOnly: false
     - mountPath: "/home/jenkins/agent"
       name: "workspace-volume"
       readOnly: false
     workingDir: "/home/jenkins/agent"
-  - image: "docker"
-    imagePullPolicy: "IfNotPresent"
-    name: "docker"
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "512m"
-      limits:
-        memory: "512Mi"
-        cpu: "512m"
+  - image: "docker:18.09-dind"
+    name: "dind"
+    args: 
+    - "--insecure-registry=registry-docker-registry.registry.svc.cluster.local:5000"
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "medineshkatwal/kustomize:v1"
+    name: "tools"
     tty: true
     volumeMounts:
-    - mountPath: "/var/run/docker.sock"
-      name: "volume-0"
-      readOnly: false
     - mountPath: "/home/jenkins/agent"
       name: "workspace-volume"
       readOnly: false
-    workingDir: "/home/jenkins/agent"
-  - image: "jenkins/jnlp-slave:alpine"
+  - command:
+    - "cat"
+    env:
+    - name: "DOCKER_HOST"
+      value: "127.0.0.1"
+    image: "docker:18.09"
+    name: "docker"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - image: "jenkins/jnlp-slave:3.35-5-alpine"
     name: "jnlp"
     volumeMounts:
-    - mountPath: "/var/run/docker.sock"
-      name: "volume-0"
-      readOnly: false
     - mountPath: "/home/jenkins/agent"
       name: "workspace-volume"
       readOnly: false
+  nodeSelector:
+    beta.kubernetes.io/os: "linux"
   restartPolicy: "Never"
+  securityContext: {}
   volumes:
-  - hostPath:
-      path: "/var/run/docker.sock"
-    name: "volume-0"
-  - emptyDir: {}
+  - emptyDir:
+      medium: ""
     name: "workspace-volume"
