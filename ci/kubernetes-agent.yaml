@@ -31,7 +31,7 @@ spec:
       readOnly: false
   - command:
     - "cat"
-    image: "argoproj/argo-cd-ci-builder:v1.0.0"
+    image: "medineshkatwal/kustomize:v1"
     name: "tools"
     tty: true
     volumeMounts:
@@ -50,13 +50,17 @@ spec:
     - mountPath: "/home/jenkins/agent"
       name: "workspace-volume"
       readOnly: false
-  - image: "jenkins/jnlp-slave:alpine"
+  - image: "jenkins/jnlp-slave:3.35-5-alpine"
     name: "jnlp"
     volumeMounts:
     - mountPath: "/home/jenkins/agent"
       name: "workspace-volume"
       readOnly: false
+  nodeSelector:
+    beta.kubernetes.io/os: "linux"
   restartPolicy: "Never"
+  securityContext: {}
   volumes:
-  - emptyDir: {}
+  - emptyDir:
+      medium: ""
     name: "workspace-volume"
