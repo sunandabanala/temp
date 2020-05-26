@@ -20,9 +20,8 @@ pipeline {
     argocd_server="argocd.auzmor.com"
   }
   options {
-      buildDiscarder(logRotator(numToKeepStr:'10'))
-      disableConcurrentBuilds()
-      timeout(time: 15, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr:'10'))
+    disableConcurrentBuilds()
   }
   stages {
     stage("Start") {
@@ -163,11 +162,12 @@ pipeline {
             branch 'master'
         }
         steps {
+            // we need a first milestone step so that all jobs entering this stage are tracked an can be aborted if needed
             milestone(1)
-
             timeout(time: 10, unit: 'MINUTES') {
                 input message: "Does Staging/ Sandbox look good?"
             }
+            // this will kill any job which is still in the input step
             milestone(2)
         }
     }
