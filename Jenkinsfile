@@ -12,7 +12,8 @@ pipeline {
   }
   environment {
     project_id="us.gcr.io/staging-auzmor"
-    artifact="calendar"
+    artifact="calendar-backend"
+    liquibase_artifact="calendar-backend-liquibase"
     credentials_id="staging_auzmor"
     project_id_harbor="$registry_url/auzmor"
     credentials_id_harbor="harbor-registry"
@@ -36,14 +37,26 @@ pipeline {
                 version="${git_hash.trim()}.${env.BUILD_NUMBER}"
                 imageTag="${env.project_id}/${env.artifact}:${version}"
             }
+            container("docker") {
+                withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
+                sh "docker pull ${env.project_id_harbor}/${env.artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                sh "docker pull ${env.project_id_harbor}/${env.liquibase_artifact}:latest > /dev/null && echo \"exists\" || echo \"doesn't exists\""
+                }
+            }
         }
     }
     stage('Build') {
         steps {
             container('docker') {
                 withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
-                     sh "docker build --tag ${env.project_id_harbor}/${env.artifact}:latest ."
+                     sh "docker build --cache-from ${env.project_id_harbor}/${env.artifact}:latest --tag ${env.project_id_harbor}/${env.artifact}:latest ."
                      sh "docker tag ${env.project_id_harbor}/${env.artifact}:latest ${imageTag}"
+                     sh "docker build -f Dockerfile.liquibase --cache-from ${env.project_id_harbor}/${env.liquibase_artifact}:latest --tag ${env.project_id_harbor}/${env.liquibase_artifact}:latest ."
+                     sh "docker tag ${env.project_id_harbor}/${env.liquibase_artifact}:latest ${env.project_id}/${env.liquibase_artifact}:${version}"
+                }
+                withDockerRegistry(credentialsId: "${credentials_id_harbor}", url: "${registry_url_harbor}") {
+                 sh "docker push ${env.project_id_harbor}/${env.artifact}:latest"
+                 sh "docker push ${env.project_id_harbor}/${env.liquibase_artifact}:latest"
                 }
             }
         }
@@ -54,6 +67,7 @@ pipeline {
             container("docker") {
                 withDockerRegistry(credentialsId: "gcr:${credentials_id}", url: 'https://us.gcr.io') {
                     sh "docker push ${imageTag}"
+                    sh "docker push ${env.project_id}/${env.liquibase_artifact}:${version}"
                 }
             }
         }
@@ -62,11 +76,17 @@ pipeline {
         when {
             branch "develop"
         }
-       environment {
+        environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
             APP_NAME="calendar-development"
         }
         steps {
+            container("gcloud") {
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
+                println("Migration job succeeded")
+            }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                 script {
@@ -100,6 +120,11 @@ pipeline {
             APP_NAME="calendar-qa"
         }
         steps {
+            container("gcloud") {
+                deployKubernetes credential_id: 'staging', cluster_name: 'dev-staging', zone_name: 'us-central1', project_name: 'staging-auzmor', namespace: 'qa', type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: "qa", grep:"migrate"
+                println("Migration job succeeded")
+            }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                 script {
@@ -112,7 +137,7 @@ pipeline {
                     sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
               }
-              withCredentials([string(credentialsId: "argocd", variable: 'ARGOCD_AUTH_TOKEN')]) {
+              withCredentials([string(credentialsId: "argocd_qa", variable: 'ARGOCD_AUTH_TOKEN')]) {
                     sh '''
                     ARGOCD_SERVER=$argocd_server argocd --grpc-web app set $APP_NAME
                     
@@ -122,7 +147,7 @@ pipeline {
                     '''
               }
             }
-      }
+        }
     }
     stage("Deploy Staging") {
         when {
@@ -130,9 +155,17 @@ pipeline {
         }
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
-            APP_NAME="calendar-development"
+            APP_NAME="calendar-staging"
         }
         steps {
+            container("gcloud") {
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
+                println("Migration job succeeded")
+                println("Deploying to ${env.cluster}...") 
+                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
+            }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                 script {
@@ -145,7 +178,7 @@ pipeline {
                     sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
               }
-              withCredentials([string(credentialsId: "argocd", variable: 'ARGOCD_AUTH_TOKEN')]) {
+              withCredentials([string(credentialsId: "argocd_staging", variable: 'ARGOCD_AUTH_TOKEN')]) {
                     sh '''
                     ARGOCD_SERVER=$argocd_server argocd --grpc-web app set $APP_NAME
                     
@@ -164,6 +197,7 @@ pipeline {
         steps {
             // we need a first milestone step so that all jobs entering this stage are tracked an can be aborted if needed
             milestone(1)
+            // time out manual approval after ten minutes
             timeout(time: 10, unit: 'MINUTES') {
                 input message: "Does Staging/ Sandbox look good?"
             }
@@ -183,9 +217,14 @@ pipeline {
             cred_id="production"
         }
         steps {
-            loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
-            println("Deploying to ${env.cluster}...") 
-            deployKubernetes namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
+            container("gcloud") {
+                loginKubernetes credential_id: env.cred_id, cluster_name: env.cluster, zone_name: env.zone, project_name: env.project
+                deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
+                utility check: "jobs", namespace: env.namespace, grep:"migrate"
+                println("Migration job succeeded")
+                println("Deploying to ${env.cluster}...") 
+                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
+            }
         }
     }
   }
