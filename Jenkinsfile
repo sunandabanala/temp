@@ -79,6 +79,11 @@ pipeline {
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
             APP_NAME="calendar-development"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="development"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
@@ -118,6 +123,11 @@ pipeline {
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
             APP_NAME="calendar-qa"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="qa"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
@@ -156,6 +166,11 @@ pipeline {
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
             APP_NAME="calendar-staging"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="staging"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
