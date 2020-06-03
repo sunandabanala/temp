@@ -97,9 +97,9 @@ pipeline {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/development && kustomize edit set image ${imageTag}"
                     sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
@@ -140,9 +140,9 @@ pipeline {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/qa && kustomize edit set image ${imageTag}"
                     sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
@@ -186,9 +186,9 @@ pipeline {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/staging && kustomize edit set image ${imageTag}"
                     sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
