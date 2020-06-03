@@ -178,8 +178,6 @@ pipeline {
                 deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
                 utility check: "jobs", namespace: env.namespace, grep:"migrate"
                 println("Migration job succeeded")
-                println("Deploying to ${env.cluster}...") 
-                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
             }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
