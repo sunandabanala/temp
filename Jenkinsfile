@@ -18,6 +18,7 @@ pipeline {
     project_id_harbor="$registry_url/auzmor"
     credentials_id_harbor="harbor-registry"
     registry_url_harbor="http://$registry_url"
+    argocd_server="argocd.auzmor.com"
   }
   options {
     buildDiscarder(logRotator(numToKeepStr:'10'))
@@ -77,6 +78,12 @@ pipeline {
         }
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+            APP_NAME="calendar-development"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="development"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
@@ -90,13 +97,22 @@ pipeline {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/development && kustomize edit set image ${imageTag}"
-                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
-              } 
+              }
+              withCredentials([string(credentialsId: "argocd", variable: 'ARGOCD_AUTH_TOKEN')]) {
+                    sh '''
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app set $APP_NAME
+                    
+                    # Deploy to ArgoCD
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app sync $APP_NAME --force
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app wait $APP_NAME --timeout 600
+                    '''
+              }
             }
         }
     }
@@ -106,6 +122,12 @@ pipeline {
         }
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+            APP_NAME="calendar-qa"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="qa"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
@@ -118,13 +140,22 @@ pipeline {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/qa && kustomize edit set image ${imageTag}"
-                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
-              } 
+              }
+              withCredentials([string(credentialsId: "argocd_qa", variable: 'ARGOCD_AUTH_TOKEN')]) {
+                    sh '''
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app set $APP_NAME
+                    
+                    # Deploy to ArgoCD
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app sync $APP_NAME --force
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app wait $APP_NAME --timeout 600
+                    '''
+              }
             }
         }
     }
@@ -134,6 +165,12 @@ pipeline {
         }
         environment {
             GIT_CREDS = '2fd32807-2a2f-4551-b343-79482e2d7e9e'
+            APP_NAME="calendar-staging"
+            cluster="dev-staging"
+            zone="us-central1"
+            project="staging-auzmor"
+            namespace="staging"
+            cred_id="staging"
         }
         steps {
             container("gcloud") {
@@ -141,21 +178,28 @@ pipeline {
                 deployKubernetes namespace: env.namespace, type: "MIGRATE", grep: 'calendar-secret', version: version, job: "migrate"
                 utility check: "jobs", namespace: env.namespace, grep:"migrate"
                 println("Migration job succeeded")
-                println("Deploying to ${env.cluster}...") 
-                deployKubernetes  namespace: env.namespace ,deployment: 'calendar-backend', imageTag: imageTag
             }
             container('tools') {
               withCredentials([usernamePassword(credentialsId: env.GIT_CREDS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                 script {
                     env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                 }
-                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorlms/k8s.git'
+                sh 'git clone https://${USER}:${encodedPass}@bitbucket.org/auzmorhcm/ats-core-deployment.git'
                 sh "git config --global user.email 'ci@auzmor.com'"
-                dir("k8s") {
+                dir("ats-core-deployment") {
                     sh "cd ./microservices/calendar/staging && kustomize edit set image ${imageTag}"
-                    sh "git commit -am 'Publish new version ${imageTag}' && git push --set-upstream origin master || echo 'no changes'"
+                    sh "git commit -am 'Publish new version ${imageTag}' && git pull origin master && git push --set-upstream origin master || echo 'no changes'"
                 }
-              } 
+              }
+              withCredentials([string(credentialsId: "argocd_staging", variable: 'ARGOCD_AUTH_TOKEN')]) {
+                    sh '''
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app set $APP_NAME
+                    
+                    # Deploy to ArgoCD
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app sync $APP_NAME --force
+                    ARGOCD_SERVER=$argocd_server argocd --grpc-web app wait $APP_NAME --timeout 600
+                    '''
+              }
             }
         }
     }
