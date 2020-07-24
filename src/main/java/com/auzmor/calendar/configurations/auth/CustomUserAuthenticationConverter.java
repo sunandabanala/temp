@@ -66,9 +66,8 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
     Set<CustomRole> roles = new HashSet<>();
     for (Map<String, ?> map: list) {
       CustomRole role = new CustomRole(map.get("uuid").toString(),
-        map.get("authority").toString(),
-        getPermissions((List<Map<String, ?>>) map.get("permissions")
-        ));
+        map.get("authority").toString(), null
+       );
       roles.add(role);
     }
     return roles;
