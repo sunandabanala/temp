@@ -45,7 +45,8 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
       return new UsernamePasswordAuthenticationToken(
         new CustomPrincipal(uuid, firstName, lastName, email, country, mobile, type,
           getCustomOrganization((Map<String, ?>)map.get("organization")),
-          getRoles((List<Map<String, ?>>) map.get("roles")),token
+          getRoles((List<Map<String, ?>>) map.get("roles")),token,
+          getPermissionStrings((List<String>) map.get("permissions"))
         ), null,
         getAuthorities(map)
       );
@@ -65,12 +66,20 @@ public class CustomUserAuthenticationConverter implements UserAuthenticationConv
     Set<CustomRole> roles = new HashSet<>();
     for (Map<String, ?> map: list) {
       CustomRole role = new CustomRole(map.get("uuid").toString(),
-        map.get("authority").toString(),
-        getPermissions((List<Map<String, ?>>) map.get("permissions")
-        ));
+        map.get("authority").toString(), null
+       );
       roles.add(role);
     }
     return roles;
+  }
+
+  private Set<String> getPermissionStrings(List<String> list) {
+    Set<String> permissions = new HashSet<>();
+    if(list!=null){
+      for (String permission: list) {
+        permissions.add(permission);
+      }}
+    return permissions;
   }
 
   private Set<CustomPermission> getPermissions(List<Map<String, ?>> list) {
