@@ -11,10 +11,10 @@ import java.util.Set;
 public interface CalendarService {
 
   Object saveEvent(final String eventId, final String title, final String externalTitle, final String start, final String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds,
-                  final String description, final  String externalDescription, final String location) throws JSONException, IOException;
+                  final String description, final  String externalDescription, final String location, final String externalLocation) throws JSONException, IOException;
 
   Object updateEvent(final String eventId, final String title, final String externalTitle, final String start, final String end, final Set<String> guestEmails, final Set<AttendeeRequest> attendeeIds,
-                   final String description, final  String externalDescription, final String location) throws JSONException, IOException;
+                   final String description, final  String externalDescription, final String location, final String externalLocation) throws JSONException, IOException;
 
   Object checkAvailability(String email, final long start, final long end) throws IOException;
 
