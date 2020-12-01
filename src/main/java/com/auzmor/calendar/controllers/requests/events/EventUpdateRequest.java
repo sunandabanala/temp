@@ -52,4 +52,7 @@ public class EventUpdateRequest {
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String location;
 
+  @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
+  private String externalLocation;
+
 }
