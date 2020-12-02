@@ -38,7 +38,7 @@ public class EventUpdateRequest {
     "    {\n" +
     "      \"email\" : \"abc@gmail.com\""+
     "    }]")
-  private Set<AttendeeRequest> inviteeIds;
+  private Set<EmployeeQueryRequest> inviteeIds;
 
   @ApiModelProperty(notes="All guests for this event", example = "[\"abcd@auzmor.com\"]")
   private Set<String> guestEmails;
