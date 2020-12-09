@@ -36,7 +36,7 @@ public class CalendarController extends Controller {
   public ResponseEntity<Object> create(@Valid @RequestBody EventCreateRequest request)
     throws Exception {
     return new ResponseEntity<>(calendarService.saveEvent(request.getEventId(), request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(),
-      request.getExternalDescription(), request.getLocation()),
+      request.getExternalDescription(), request.getLocation(), request.getExternalLocation()),
       HttpStatus.CREATED);
   }
 
@@ -48,7 +48,7 @@ public class CalendarController extends Controller {
                                       @RequestBody @Valid EventUpdateRequest request)
     throws Exception {
     return new ResponseEntity<>(calendarService.updateEvent(id, request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(), request.getExternalDescription(),
-      request.getLocation()),
+      request.getLocation(), request.getExternalLocation()),
       HttpStatus.OK);
   }
 

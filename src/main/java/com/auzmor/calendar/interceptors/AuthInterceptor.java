@@ -52,7 +52,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     if(nylasToken != null) {
       logger.error("nylastoken: "+nylasToken);
       applicationContextService.setToken(nylasToken);
-      applicationContextService.setAccountId(userTokenDataByEmail.get("uuid"));
+      if(userTokenDataByEmail!= null){
+       applicationContextService.setAccountId(userTokenDataByEmail.get("uuid"));
+      }
     }else{
       logger.error("userTokenDataByEmail: "+userId);
       if(userTokenDataByEmail == null) {
