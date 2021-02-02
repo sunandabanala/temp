@@ -91,6 +91,9 @@ public class CalendarServiceImpl implements CalendarService {
     JSONObject guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter);
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate);
 
+    System.out.println("Inteviewers Json: " + interviewersJson.toString());
+    System.out.println("Guest Json: " + guestJson.toString());
+
     ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
 
