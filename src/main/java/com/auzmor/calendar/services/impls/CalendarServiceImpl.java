@@ -174,9 +174,9 @@ public class CalendarServiceImpl implements CalendarService {
     m.put("participants",participantsList);
     m.put("description",description);
     m.put("location", location);
-    if(location!=null){
+    /*if(location!=null){
     m.put("conferenceData", null);
-    }
+    }*/
     JSONObject json = new JSONObject(m);
     return json;
   }
