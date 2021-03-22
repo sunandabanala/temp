@@ -61,4 +61,8 @@ public class EventCreateRequest {
 
   private Boolean gmeet;
 
+  public Boolean getGmeet() {
+    return (this.gmeet != null) ? this.gmeet : false;
+  }
+
 }
