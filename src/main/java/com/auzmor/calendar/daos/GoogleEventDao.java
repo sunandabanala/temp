@@ -1,7 +1,9 @@
 package com.auzmor.calendar.daos;
 
+import com.auzmor.calendar.models.entities.GoogleEvent;
+
 import java.util.Set;
 
 public interface GoogleEventDao {
-  Set<String> getByGmeets(Set<String> gmeets);
+  GoogleEvent getByGmeet(String gmeet);
 }

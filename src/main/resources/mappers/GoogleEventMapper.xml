@@ -8,7 +8,7 @@
     <id column="id" jdbcType="INTEGER" property="id" javaType="java.lang.Integer"/>
     <result column="uuid" jdbcType="VARCHAR" property="uuid"/>
     <result column="account_id" jdbcType="VARCHAR" property="accountId"/>
-    <result column="google_event_id" jdbcType="VARCHAR" property="googleEventId"/>
+    <result column="google_id" jdbcType="VARCHAR" property="googleEventId"/>
     <result column="event_details" jdbcType="VARCHAR" property="eventDetails"/>
     <result column="meet_link" jdbcType="VARCHAR" property="meetLink"/>
     <result column="user_id" jdbcType="VARCHAR" property="userId"/>
@@ -16,11 +16,7 @@
     <result column="platform_event_id" jdbcType="VARCHAR" property="platform"/>
   </resultMap>
 
-  <select id="getByGmeet" parameterType="String" resultType="GoogleEventMap">
-    SELECT eventId FROM google_event where meet_link in (
-      <foreach item="item" index="index" collection="gmeets" separator=",">
-        #{item}
-      </foreach>
-    )
+  <select id="getByGmeet" parameterType="String" >
+    SELECT eventId FROM google_event where meet_link = #{gmeet}
   </select>
 </mapper>

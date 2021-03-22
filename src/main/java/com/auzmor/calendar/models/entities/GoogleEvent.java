@@ -1,4 +1,4 @@
-package com.auzmor.calendar.models;
+package com.auzmor.calendar.models.entities;
 
 import com.auzmor.calendar.models.entities.Entity;
 import lombok.AllArgsConstructor;
