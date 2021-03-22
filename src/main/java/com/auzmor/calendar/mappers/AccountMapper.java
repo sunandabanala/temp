@@ -13,5 +13,5 @@ public interface AccountMapper {
   void updateAccount(@Param("accountId") String accountId, @Param("cursorId") String cursorId);
   void saveUserAccount(@Param("userAccount") final UserAccount userAccount);
   void desyncUser(@Param("userId")String userId);
-  void updateCursors(@Param("cursorId") String cursorId, @Param("accountIds") Set<String> accoutnIds);
+  void updateCursors(@Param("cursorId") String cursorId, @Param("accountIds") Set<String> accountIds);
 }

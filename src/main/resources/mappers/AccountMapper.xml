@@ -18,7 +18,7 @@
   <update id='updateCursors' parameterType='String'>
     UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
     where nylas_account_id in (
-      <foreach item="item" index="index" collection="Ids" separator=",">
+      <foreach item="item" index="index" collection="accountIds" separator=",">
         #{item}
       </foreach>
     )
