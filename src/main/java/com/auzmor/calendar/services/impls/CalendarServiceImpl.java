@@ -3,7 +3,7 @@ package com.auzmor.calendar.services.impls;
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.controllers.requests.events.EmployeeQueryRequest;
 import com.auzmor.calendar.daos.CalendarDao;
-import com.auzmor.calendar.helpers.CalendarEvent;
+import com.auzmor.calendar.helpers.*;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
@@ -16,17 +16,22 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static com.auzmor.calendar.constants.ApiConstants.GOOGLE_CREATE_EVENT_API;
 import static com.auzmor.calendar.constants.DataConstants.DUMMY_EMAIL;
 import static com.auzmor.calendar.constants.NylasApiConstants.*;
+import static com.auzmor.calendar.utils.RestTemplateUtil.objectToMap;
 
 @Service
 public class CalendarServiceImpl implements CalendarService {
@@ -39,8 +44,7 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                          String externalDescription, String location, String externalLocation) throws JSONException, IOException {
-
+                          String externalDescription, String location, String externalLocation, Boolean gmeet) throws Exception {
     String defaultCalendarId;
     String organizerCalendarId;
     String timezone = getTimeZone(start);
@@ -54,6 +58,7 @@ public class CalendarServiceImpl implements CalendarService {
 
     String organizerToken = applicationContextService.geToken();
     String defaultToken = applicationContextService.getDefaultToken();
+    String providerType = applicationContextService.getProviderType();
 
 
     if(defaultToken.equals(organizerToken)) {
@@ -88,26 +93,37 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
 
-    JSONObject guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate);
-
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate, null);
+    JSONObject guestJson = null;
     System.out.println("Inteviewers Json: " + interviewersJson.toString());
     System.out.println("Guest Json: " + guestJson.toString());
 
-    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
-    updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+    if (gmeet && providerType.equals("gmail")) {
+      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getCurrentUsername(), applicationContextService.getProviderRefreshToken());
+      Map conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
+      guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
+      ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
+      Gson gson = new Gson();
+      CalendarEvent candidateEventData = (CalendarEvent) candidateResponse.getBody();
+      Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, gson.toJson(candidateEventData) , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
+      calendarDao.saveEvent(null,candidateEvent);
+    } else {
+      guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, null);
+      ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
+      updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
 
-    ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
-    updateCursorId(defaultToken, organizerToken, defaultUserId, null);
+      ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
+      updateCursorId(defaultToken, organizerToken, defaultUserId, null);
 
 
-    Gson gson = new Gson();
-    CalendarEvent calendarData = (CalendarEvent) response.getBody();
-    CalendarEvent candidateEventData = (CalendarEvent) candidateResponse.getBody();
+      Gson gson = new Gson();
+      CalendarEvent calendarData = (CalendarEvent) response.getBody();
+      CalendarEvent candidateEventData = (CalendarEvent) candidateResponse.getBody();
 
-    Event event = new Event(calendarData.getId(), organizerCalendarId, accountId, gson.toJson(calendarData) , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
-    Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, gson.toJson(candidateEventData) , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
-    calendarDao.saveEvent(event,candidateEvent);
+      Event event = new Event(calendarData.getId(), organizerCalendarId, accountId, gson.toJson(calendarData) , uuid, ObjectType.EVENT, eventId, EventType.INTERNAL, timezone);
+      Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, gson.toJson(candidateEventData) , candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
+      calendarDao.saveEvent(event,candidateEvent);
+    }
     Map<String, Object> result = new HashMap();
     result.put("response", "ok");
     return result;
@@ -141,7 +157,7 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   JSONObject calendardataJson(Set<Map> participants, Set<String> guestEmails, String start, String end, String calendar_Id, String title, String description, String location,
-                              Map<String, Object> dummyRecruiter) {
+                              Map<String, Object> dummyRecruiter, Map conferenceMap) {
 
     long startTime = ZonedDateTime.parse(start).toInstant().getEpochSecond();
     long endTime = ZonedDateTime.parse(end).toInstant().getEpochSecond();
@@ -174,6 +190,7 @@ public class CalendarServiceImpl implements CalendarService {
     m.put("participants",participantsList);
     m.put("description",description);
     m.put("location", location);
+    m.put("conferencing", conferenceMap);
     /*if(location!=null){
     m.put("conferenceData", null);
     }*/
@@ -201,7 +218,7 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   public Object updateEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                           String externalDescription, String location, String externalLocation) throws JSONException, IOException {
+                           String externalDescription, String location, String externalLocation, Map conferenceMap) throws JSONException, IOException {
     String default_calendar_Id;
     String organizer_calendar_Id;
     String userId = applicationContextService.getCurrentUserId();
@@ -246,8 +263,8 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
-    JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter);
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizer_calendar_Id, title, description, location, dummyCandidate);
+    JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizer_calendar_Id, title, description, location, dummyCandidate, conferenceMap);
 
     ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT, CalendarEvent.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
@@ -308,6 +325,57 @@ public class CalendarServiceImpl implements CalendarService {
     updateCursorId(defaultToken, organizerToken, defaultUserId, null);
 
     calendarDao.deleteEvent(id);
+  }
+
+  public EntryPoint googleCreateApi(String eventId, String title, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,String location, String email, String token) throws Exception {
+    GoogleCreateEventRequestBody gce = new GoogleCreateEventRequestBody();
+    gce.setSummary(title);
+    gce.setLocation(location);
+    gce.setDescription(description);
+    DateObj startObj = new DateObj();
+    DateObj endObj = new DateObj();
+    startObj.setDatetime(start);
+    endObj.setDatetime(end);
+    List<Organizer> attendees = new ArrayList();
+    for (String mail: guestEmails) {
+      Organizer guest = new Organizer();
+      guest.setDisplayName(mail);
+      guest.setEmail(mail);
+      attendees.add(guest);
+    }
+    gce.setAttendees(attendees);
+    String uri = GOOGLE_CREATE_EVENT_API.replace("{calendarId}", email);
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Authorization", "Bearer " + token);
+    HttpEntity<Map<String, String>> request = new HttpEntity<>(objectToMap(gce), headers);
+    ResponseEntity<?> response = restTemplate.postForEntity(uri, request, String.class);
+    Map map = (Map)response.getBody();
+    List<EntryPoint> entryPoints = (List<EntryPoint>)map.get("entryPoints");
+    String conferenceId = (String)map.get("conferenceId");
+    EntryPoint result = new EntryPoint();
+    for (EntryPoint entryPoint: entryPoints) {
+      if (entryPoint.getEntryPointType().equals("video")) {
+        result.setUri(entryPoint.getUri());
+      } else if (entryPoint.getEntryPointType().equals("phone")) {
+        result.setLabel(entryPoint.getLabel());
+        result.setPin(entryPoint.getPin());
+      }
+    }
+    return result;
+  }
+
+  private Map conferenceMap(String pin, String phone, String uri) {
+    Set<String> phones = new HashSet<>();
+    phones.add(phone);
+    Map map = new HashMap();
+    map.put("pin", pin);
+    map.put("phone", phones);
+    map.put("uri", uri);
+    Map details = new HashMap();
+    details.put("details", map);
+    details.put("provider", "Google Meet");
+    return details;
   }
 
 }

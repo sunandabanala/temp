@@ -59,4 +59,6 @@ public class EventCreateRequest {
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String externalLocation;
 
+  private Boolean gmeet;
+
 }

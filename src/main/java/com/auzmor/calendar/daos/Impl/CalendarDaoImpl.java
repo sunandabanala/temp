@@ -28,7 +28,9 @@ public class CalendarDaoImpl implements CalendarDao {
   @Override
   public void saveEvent(Event event, Event candidateEvent) {
     List<Event> events = new ArrayList<>();
-    events.add(event);
+    if (event != null) {
+      events.add(event);
+    }
     events.add(candidateEvent);
     calendarMapper.saveEvents(events);
   }

@@ -32,7 +32,13 @@ public class WebhookController {
     return request.getParameter("challenge");
   }
 
+  @RequestMapping(value = "/webhook/create", method = RequestMethod.GET)
+  public String testCreate(HttpServletRequest request) {
+    return request.getParameter("challenge");
+  }
+
   @RequestMapping(value = "/webhook", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
   public String testPost(HttpServletRequest request) throws Exception {
     String details = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     JSONObject jo = new JSONObject(details);
@@ -42,6 +48,18 @@ public class WebhookController {
     webhookService.handleWebhook(diff.get("date").toString(), objectData.get("id").toString(), diff.get("type").toString(), diff.get("object").toString(), objectData.get("account_id").toString());
     return request.getParameter("challenge");
   }
+
+  @RequestMapping(value = "/webhook/create", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public void testCreatePost(HttpServletRequest request) throws Exception {
+    String details = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+    JSONObject jo = new JSONObject(details);
+    JSONArray delta = (JSONArray)jo.get("deltas");
+    JSONObject diff = (JSONObject) delta.get(0);
+    JSONObject objectData = (JSONObject)diff.get("object_data");
+    //webhookService.handleWebhook(diff.get("date").toString(), objectData.get("id").toString(), diff.get("type").toString(), diff.get("object").toString(), objectData.get("account_id").toString());
+  }
+
 
   @ApiOperation(value = "Add nylasAccount ")
   @RequestMapping(value = "/addNylasAccount", method = RequestMethod.POST)

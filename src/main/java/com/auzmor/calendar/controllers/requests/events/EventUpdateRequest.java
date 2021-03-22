@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -54,5 +55,7 @@ public class EventUpdateRequest {
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String externalLocation;
+
+  private Map conferenceMap;
 
 }

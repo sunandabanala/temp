@@ -15,6 +15,8 @@ public class NylasApiConstants {
 
   public static final String FETCH_CALENDAR_ID ="https://api.nylas.com/calendars";
 
+  public static final String GET_EVENT = "https://api.nylas.com/events/{id}";
+
 
 
 
