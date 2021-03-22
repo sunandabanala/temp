@@ -115,8 +115,8 @@
         </foreach>
     </update>
 
-    <select id="getAccountsById" parameterType="java.util.HashSet" resultType="java.util.HashSet">
-        SELECT object_id FROM calendar_details where object_id in #{objectIds}
+    <select id="getEventIds" parameterType="java.util.HashSet" resultType="java.util.HashSet">
+        SELECT object_id FROM calendar_details where object_id in #{eventIds}
     </select>
 </mapper>
 

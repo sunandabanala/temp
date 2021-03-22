@@ -15,6 +15,4 @@ public interface AccountDao {
 
   void desync(final String userId);
 
-  Set<String> getAccountIds(Set<String> accountIds);
-
 }

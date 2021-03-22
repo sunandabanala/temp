@@ -11,12 +11,13 @@ import com.auzmor.calendar.helpers.Delta;
 import com.auzmor.calendar.mappers.AccountMapper;
 import com.auzmor.calendar.mappers.CalendarMapper;
 import com.auzmor.calendar.mappers.GoogleEventMapper;
-import com.auzmor.calendar.models.GoogleEvent;
+import com.auzmor.calendar.models.entities.GoogleEvent;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
 import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
+import org.apache.ibatis.annotations.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,7 +189,7 @@ public class WebhookDaoImpl implements WebhookDao {
         eventIds.add(delta.getAttributes().getId());
       }
     }
-    Set<String> existingEventIds = accountDao.getAccountIds(eventIds);
+    Set<String> existingEventIds = calendarMapper.getEventIds(eventIds);
     eventIds.removeAll(existingEventIds);
     return eventIds;
   }

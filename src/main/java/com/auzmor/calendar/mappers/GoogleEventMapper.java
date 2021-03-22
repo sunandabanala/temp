@@ -1,6 +1,6 @@
 package com.auzmor.calendar.mappers;
 
-import com.auzmor.calendar.models.GoogleEvent;
+import com.auzmor.calendar.models.entities.GoogleEvent;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Set;
