@@ -7,6 +7,7 @@ import com.auzmor.calendar.models.UserAccount;
 import com.auzmor.calendar.services.WebhookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +27,7 @@ public class WebhookServiceImpl implements WebhookService {
   private AccountDao accountDao;
 
   @Override
+  @Async
   public void handleWebhook(String date, String objectId, String eventType, String object, String accountId) throws Exception {
     List<UserAccount> accounts = accountDao.getAccount(accountId);
     UserAccount account = accounts.get(0);
@@ -33,4 +35,14 @@ public class WebhookServiceImpl implements WebhookService {
     String token = account.getNylasToken();
     webhookDao.handleWebhook(cursorId, token, accountId);
   }
+
+  @Override
+  public void handleEventCreation(String objectId, String eventType, String object, String accountId) throws Exception {
+    List<UserAccount> accounts = accountDao.getAccount(accountId);
+    UserAccount account = accounts.get(0);
+    String cursorId = account.getCursorId();
+    String token = account.getNylasToken();
+    webhookDao.createEvent(cursorId, token, accountId);
+  }
+
 }

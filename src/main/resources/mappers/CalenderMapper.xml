@@ -58,7 +58,9 @@
         SELECT
         nylas_token,
         uuid,
-        user_id
+        user_id,
+        provider_type,
+        provider_refresh_token
         FROM user_account
         where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
@@ -69,6 +71,7 @@
         FROM user_account
         where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
+
     <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
             SELECT cd.uuid, cd.object_id, cd.object_type, cd.event_type,
             cd.event_id, cd.calendar_details, cd.account_id,
@@ -111,5 +114,9 @@
             UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{event.cursorId} where user_id=#{event.userId}
         </foreach>
     </update>
+
+    <select id="getAccountsById" parameterType="java.util.HashSet" resultType="java.util.HashSet">
+        SELECT object_id FROM calendar_details where object_id in #{objectIds}
+    </select>
 </mapper>
 
