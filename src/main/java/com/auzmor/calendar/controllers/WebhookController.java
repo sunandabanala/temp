@@ -57,7 +57,7 @@ public class WebhookController {
     JSONArray delta = (JSONArray)jo.get("deltas");
     JSONObject diff = (JSONObject) delta.get(0);
     JSONObject objectData = (JSONObject)diff.get("object_data");
-    //webhookService.handleWebhook(diff.get("date").toString(), objectData.get("id").toString(), diff.get("type").toString(), diff.get("object").toString(), objectData.get("account_id").toString());
+    webhookService.handleEventCreation(objectData.get("id").toString(), diff.get("type").toString(), diff.get("object").toString(), objectData.get("account_id").toString());
   }
 
 
