@@ -57,6 +57,7 @@
     <select id='getTokenDataByUserId' parameterType='String' resultType='java.util.HashMap'>
         SELECT
         nylas_token,
+        username,
         uuid,
         user_id,
         provider_type,

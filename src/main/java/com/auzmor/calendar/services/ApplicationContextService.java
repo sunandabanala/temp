@@ -21,4 +21,6 @@ public interface ApplicationContextService {
   void setProviderType(String providerType);
   String getProviderRefreshToken();
   void setProviderRefreshToken(String refreshToken);
+  String getEmail();
+  void setEmail(String email);
 }
