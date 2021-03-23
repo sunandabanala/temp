@@ -48,8 +48,11 @@
     <select id='getTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
         SELECT
         nylas_token,
+        username,
         uuid,
-        user_id
+        user_id,
+        provider_type,
+        provider_refresh_token
         FROM user_account
         where username=#{email} and is_deleted=0 and is_active =1;
     </select>
@@ -117,7 +120,11 @@
     </update>
 
     <select id="getEventIds" parameterType="java.util.HashSet" resultType="java.util.HashSet">
-        SELECT object_id FROM calendar_details where object_id in #{eventIds}
+        SELECT object_id FROM calendar_details where object_id in (
+            <foreach item="item" index="index" collection="eventIds" separator=",">
+                #{item}
+            </foreach>
+        )
     </select>
 </mapper>
 

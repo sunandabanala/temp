@@ -57,6 +57,10 @@ public class AuthInterceptor implements HandlerInterceptor {
        applicationContextService.setProviderType(userTokenDataByEmail.get("provider_type"));
        applicationContextService.setProviderRefreshToken(userTokenDataByEmail.get("provider_refresh_token"));
        applicationContextService.setEmail(userTokenDataByEmail.get("username"));
+      } else {
+        applicationContextService.setProviderType(defaultTokenDataByEmail.get("provider_type"));
+        applicationContextService.setProviderRefreshToken(defaultTokenDataByEmail.get("provider_refresh_token"));
+        applicationContextService.setEmail(defaultTokenDataByEmail.get("username"));
       }
     }else{
       logger.error("userTokenDataByEmail: "+userId);
@@ -64,6 +68,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         logger.error("userTokenDataByEmail first loop: "+userId);
         userNylasToken = defaultTokenDataByEmail.get("nylas_token");
         userAccountId = defaultTokenDataByEmail.get("uuid");
+        applicationContextService.setProviderType(defaultTokenDataByEmail.get("provider_type"));
+        applicationContextService.setProviderRefreshToken(defaultTokenDataByEmail.get("provider_refresh_token"));
+        applicationContextService.setEmail(defaultTokenDataByEmail.get("username"));
       }else {
         logger.error("userTokenDataByEmail second loop: ");
         userNylasToken = userTokenDataByEmail.get("nylas_token");

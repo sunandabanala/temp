@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoogleEvent extends Entity {
-  private String id;
+  private int id;
   private String accountId;
   private String googleEventId;
   private String eventDetails;
