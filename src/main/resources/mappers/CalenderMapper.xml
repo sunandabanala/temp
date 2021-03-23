@@ -119,7 +119,7 @@
         </foreach>
     </update>
 
-    <select id="getEventIds" parameterType="java.util.HashSet" resultType="java.util.HashSet">
+    <select id="getEventIds" parameterType="java.util.HashSet" resultType="String">
         SELECT object_id FROM calendar_details where object_id in (
             <foreach item="item" index="index" collection="eventIds" separator=",">
                 #{item}

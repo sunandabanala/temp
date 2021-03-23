@@ -109,6 +109,11 @@ public class CalendarServiceImpl implements CalendarService {
 
     if (gmeet && providerType.equals("gmail")) {
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone);
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
       if (entryPoint != null && entryPoint.getUri() != null) {
         Map conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
         guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
