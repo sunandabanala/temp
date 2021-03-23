@@ -5,4 +5,6 @@ import org.springframework.stereotype.Component;
 @Component
 public interface WebhookDao {
   void handleWebhook(String cursorId, String token, String accountId) throws Exception;
+
+  void createEvent(String cursorId, String token, String accountId) throws Exception;
 }

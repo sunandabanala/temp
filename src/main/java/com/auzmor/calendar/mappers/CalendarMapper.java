@@ -20,5 +20,5 @@ public interface CalendarMapper {
   void updateEvents(@Param("events") final List events);
   void saveEvents(@Param("events") final List events);
   void updateCursorIdByUserId(@Param("userId") final String userId, @Param("cursorId") final String cursorId);
-
+  List<String> getEventIds(@Param("eventIds") Set<String> eventIds);
 }

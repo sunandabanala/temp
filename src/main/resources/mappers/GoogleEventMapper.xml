@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+    'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='com.auzmor.calendar.mappers.GoogleEventMapper'>
+
+  <resultMap id="GoogleEventMap" type="com.auzmor.calendar.models.entities.GoogleEvent">
+    <id column="id" jdbcType="INTEGER" property="id" javaType="java.lang.Integer"/>
+    <result column="account_id" jdbcType="VARCHAR" property="accountId"/>
+    <result column="google_id" jdbcType="VARCHAR" property="googleEventId"/>
+    <result column="event_details" jdbcType="VARCHAR" property="eventDetails"/>
+    <result column="meet_link" jdbcType="VARCHAR" property="meetLink"/>
+    <result column="user_id" jdbcType="VARCHAR" property="userId"/>
+    <result column="timezone" jdbcType="VARCHAR" property="timezone"/>
+    <result column="platform_event_id" jdbcType="VARCHAR" property="platformEventId"/>
+  </resultMap>
+
+  <select id="getByGmeet" parameterType="String" resultMap="GoogleEventMap" >
+    SELECT id, account_id, google_id, event_details, meet_link, user_id, timezone, platform_event_id FROM google_event where meet_link = #{gmeet}
+  </select>
+
+  <insert id="saveGoogleEvent" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO google_event(account_id, meet_link, uuid, google_id, event_details, user_id, timezone, platform_event_id)
+    VALUES(#{accountId}, #{meetLink}, #{uuid}, #{googleEventId}, #{eventDetails}, #{userId}, #{timezone}, #{platformEventId})
+    <selectKey keyProperty="id" keyColumn="id" resultType="int">
+      SELECT LAST_INSERT_ID() as id;
+    </selectKey>
+  </insert>
+
+</mapper>

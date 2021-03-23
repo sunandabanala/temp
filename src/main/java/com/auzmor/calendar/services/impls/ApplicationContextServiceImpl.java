@@ -12,6 +12,9 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   private String accountId;
   private String defaultAccountId;
   private String defaultUserId;
+  private String providerType;
+  private String providerRefreshToken;
+  private String email;
 
   @Override
   public String getAccountId() {
@@ -82,4 +85,35 @@ public class ApplicationContextServiceImpl implements ApplicationContextService 
   public void setDefaultUserId(String defaultUserId) {
     this.defaultUserId=defaultUserId;
   }
+
+  @Override
+  public String getProviderType() {
+    return this.providerType;
+  }
+
+  @Override
+  public void setProviderType(String providerType) {
+    this.providerType = providerType;
+  }
+
+  @Override
+  public String getProviderRefreshToken() {
+    return this.providerRefreshToken;
+  }
+
+  @Override
+  public void setProviderRefreshToken(String providerRefreshToken) {
+    this.providerRefreshToken = providerRefreshToken;
+  }
+
+  @Override
+  public String getEmail() {
+    return this.email;
+  }
+
+  @Override
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
 }

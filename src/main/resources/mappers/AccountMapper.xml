@@ -15,6 +15,15 @@
     where nylas_account_id=#{accountId}
   </update>
 
+  <update id='updateCursors' parameterType='String'>
+    UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{cursorId}
+    where nylas_account_id in (
+      <foreach item="item" index="index" collection="accountIds" separator=",">
+        #{item}
+      </foreach>
+    )
+  </update>
+
   <insert id="saveUserAccount" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO user_account(username, provider_type, user_id, provider_refresh_token, nylas_token, nylas_account_id, cursor_id, uuid)
     VALUES(#{userAccount.username}, #{userAccount.providerType}, #{userAccount.userId}, #{userAccount.refreshToken}, #{userAccount.nylasToken}, #{userAccount.nylasAccountId}, #{userAccount.cursorId}, #{userAccount.uuid})
@@ -30,5 +39,7 @@
     updated_at=CURRENT_TIMESTAMP, is_active =0
     WHERE user_id = #{userId} and is_active =1;
   </update>
+
+
 
 </mapper>

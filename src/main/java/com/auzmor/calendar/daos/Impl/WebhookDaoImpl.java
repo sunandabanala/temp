@@ -5,20 +5,29 @@ import com.auzmor.calendar.daos.AccountDao;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.daos.WebhookDao;
 import com.auzmor.calendar.helpers.CalendarEvent;
+import com.auzmor.calendar.helpers.Conferencing;
 import com.auzmor.calendar.helpers.CursorDiff;
 import com.auzmor.calendar.helpers.Delta;
+import com.auzmor.calendar.mappers.AccountMapper;
 import com.auzmor.calendar.mappers.CalendarMapper;
+import com.auzmor.calendar.mappers.GoogleEventMapper;
+import com.auzmor.calendar.models.entities.GoogleEvent;
 import com.auzmor.calendar.models.entities.Event;
 import com.auzmor.calendar.models.entities.metadata.EventType;
+import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import com.auzmor.calendar.utils.RestTemplateUtil;
 import com.google.gson.Gson;
+import org.apache.ibatis.annotations.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+
+import static com.auzmor.calendar.constants.NylasApiConstants.GET_EVENT;
 
 @Component
 public class WebhookDaoImpl implements WebhookDao {
@@ -33,6 +42,13 @@ public class WebhookDaoImpl implements WebhookDao {
 
   @Autowired
   private CalendarDao calendarDao;
+
+  @Autowired
+  private GoogleEventMapper googleEventMapper;
+
+  @Autowired
+  private AccountMapper accountMapper;
+
 
   @Override
   public void handleWebhook(String cursorId, String token, String accountId) throws Exception {
@@ -148,6 +164,68 @@ public class WebhookDaoImpl implements WebhookDao {
     calendarDao.updateNylasApis(nylasApis);
     calendarDao.updatePlatformEvents(platformUpdateEvents);
     accountDao.updateAccount(accountId, latestCursor);
+  }
+
+  @Override
+  @Async
+  public void createEvent(String cursorId, String token, String accountId) throws Exception {
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, NylasApiConstants.FETCH_DELTAS+cursorId+"&include_types=event", HttpMethod.GET, CursorDiff.class);
+    CursorDiff cursorDiff = (CursorDiff) response.getBody();
+    if (!cursorId.equals(cursorDiff.getCursor_end())) {
+      Set<String> eventIds = getEvents(cursorDiff.getDeltas());
+      if (eventIds != null) {
+        for (String eventId : eventIds) {
+          saveGoogleEvent(eventId, token, cursorId);
+        }
+      }
+    }
+  }
+
+  private Set<String> getEvents(List<Delta> deltas) {
+    Map<String, CalendarEvent> events = new HashMap<>();
+    Set<String> eventIds = new HashSet<>();
+    for (int i=0; i<deltas.size(); i++) {
+      Delta delta = deltas.get(i);
+      if (delta.getEvent().equals("create") && delta.getObject().equals("event")) {
+        //String accountId = delta.getAttributes().getAccount_id();
+        eventIds.add(delta.getAttributes().getId());
+      }
+    }
+    if (eventIds != null && !eventIds.isEmpty()) {
+      List<String> existingEventIds = calendarMapper.getEventIds(eventIds);
+      eventIds.removeAll(existingEventIds);
+    }
+    return eventIds;
+  }
+
+  private void saveGoogleEvent(String nylasEventId, String token,  String cursorId) {
+    String url = GET_EVENT.replace("{id}", nylasEventId);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, url, HttpMethod.GET, CalendarEvent.class);
+    Gson gson = new Gson();
+    String uuid = UUID.randomUUID().toString().replace("-", "");
+    CalendarEvent calendarData = (CalendarEvent) response.getBody();
+    Conferencing conferencing = calendarData.getConferencing();
+    List<Event> eventList = new ArrayList();
+    Set<String> userIds = new HashSet<>();
+    if (conferencing != null && conferencing.getDetails() != null && conferencing.getProvider() != null && conferencing.getProvider().equals("Google Meet") ) {
+      String meetlink = String.valueOf(conferencing.getDetails().get("url"));
+      GoogleEvent googleEvent = googleEventMapper.getByGmeet(meetlink);
+      if (googleEvent != null) {
+        Event event = new Event(calendarData.getId(), calendarData.getCalendar_id(), calendarData.getAccount_id(), gson.toJson(calendarData), uuid, ObjectType.EVENT, googleEvent.getPlatformEventId(), EventType.INTERNAL, googleEvent.getTimezone());
+        List<Event> events = new ArrayList<>();
+        events.add(event);
+        calendarMapper.saveEvents(events);
+        accountMapper.updateAccount(googleEvent.getAccountId(), cursorId);
+      }
+        //eventList.add(event);
+        //userIds.add(googleEvent.getAccountId());
+    }
+
+  }
+
+  private void saveEvents(List<Event> events, Set<String> accountIds, String cursorId) {
+    calendarMapper.saveEvents(events);
+    accountMapper.updateCursors(cursorId, accountIds);
   }
 
 }
