@@ -192,7 +192,7 @@ public class WebhookDaoImpl implements WebhookDao {
       }
     }
     if (eventIds != null && !eventIds.isEmpty()) {
-      Set<String> existingEventIds = calendarMapper.getEventIds(eventIds);
+      List<String> existingEventIds = calendarMapper.getEventIds(eventIds);
       eventIds.removeAll(existingEventIds);
     }
     return eventIds;
