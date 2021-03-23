@@ -37,6 +37,7 @@ public class WebhookServiceImpl implements WebhookService {
   }
 
   @Override
+  @Async
   public void handleEventCreation(String objectId, String eventType, String object, String accountId) throws Exception {
     List<UserAccount> accounts = accountDao.getAccount(accountId);
     UserAccount account = accounts.get(0);

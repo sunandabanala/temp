@@ -173,8 +173,10 @@ public class WebhookDaoImpl implements WebhookDao {
     CursorDiff cursorDiff = (CursorDiff) response.getBody();
     if (!cursorId.equals(cursorDiff.getCursor_end())) {
       Set<String> eventIds = getEvents(cursorDiff.getDeltas());
-      for (String eventId: eventIds) {
-        //saveGoogleEvent(eventId, token);
+      if (eventIds != null) {
+        for (String eventId : eventIds) {
+          saveGoogleEvent(eventId, token, cursorId);
+        }
       }
     }
   }
@@ -189,14 +191,16 @@ public class WebhookDaoImpl implements WebhookDao {
         eventIds.add(delta.getAttributes().getId());
       }
     }
-    Set<String> existingEventIds = calendarMapper.getEventIds(eventIds);
-    eventIds.removeAll(existingEventIds);
+    if (eventIds != null && !eventIds.isEmpty()) {
+      Set<String> existingEventIds = calendarMapper.getEventIds(eventIds);
+      eventIds.removeAll(existingEventIds);
+    }
     return eventIds;
   }
 
   private void saveGoogleEvent(String nylasEventId, String token,  String cursorId) {
     String url = GET_EVENT.replace("{id}", nylasEventId);
-    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, url, HttpMethod.GET, String.class);
+    ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(token, null, url, HttpMethod.GET, CalendarEvent.class);
     Gson gson = new Gson();
     String uuid = UUID.randomUUID().toString().replace("-", "");
     CalendarEvent calendarData = (CalendarEvent) response.getBody();
@@ -206,9 +210,15 @@ public class WebhookDaoImpl implements WebhookDao {
     if (conferencing != null && conferencing.getDetails() != null && conferencing.getProvider() != null && conferencing.getProvider().equals("Google Meet") ) {
       String meetlink = String.valueOf(conferencing.getDetails().get("url"));
       GoogleEvent googleEvent = googleEventMapper.getByGmeet(meetlink);
-        Event event = new Event(calendarData.getId(), calendarData.getCalendar_id(), calendarData.getAccount_id(), gson.toJson(calendarData) , uuid, ObjectType.EVENT,googleEvent.getPlatformEventId(), EventType.INTERNAL, googleEvent.getTimezone());
-        eventList.add(event);
-        userIds.add(googleEvent.getAccountId());
+      if (googleEvent != null) {
+        Event event = new Event(calendarData.getId(), calendarData.getCalendar_id(), calendarData.getAccount_id(), gson.toJson(calendarData), uuid, ObjectType.EVENT, googleEvent.getPlatformEventId(), EventType.INTERNAL, googleEvent.getTimezone());
+        List<Event> events = new ArrayList<>();
+        events.add(event);
+        calendarMapper.saveEvents(events);
+        accountMapper.updateAccount(googleEvent.getAccountId(), cursorId);
+      }
+        //eventList.add(event);
+        //userIds.add(googleEvent.getAccountId());
     }
 
   }

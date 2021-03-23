@@ -117,6 +117,8 @@ public class CalendarServiceImpl implements CalendarService {
         CalendarEvent candidateEventData = (CalendarEvent) candidateResponse.getBody();
         Event candidateEvent = new Event(candidateEventData.getId(), defaultCalendarId, defaultAccountId, gson.toJson(candidateEventData), candidateUUID, ObjectType.EVENT, eventId, EventType.EXTERNAL, timezone);
         calendarDao.saveEvent(null, candidateEvent);
+        updateCursorId(defaultToken, organizerToken, defaultUserId, null);
+        //updateNylasEvent(organizerToken, defaultUserId, defaultToken)
       }
     } else {
       guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, null);
