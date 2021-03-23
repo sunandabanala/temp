@@ -19,4 +19,13 @@
   <select id="getByGmeet" parameterType="String" >
     SELECT eventId FROM google_event where meet_link = #{gmeet}
   </select>
+
+  <insert id="saveGoogleEvent" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO google_event(account_id, meet_link, uuid, google_id, event_details, user_id, timezone, platform_event_id)
+    VALUES(#{accountId}, #{meetLink}, #{uuid}, #{googleEventId}, #{eventDetails}, #{userId}, #{timezone}, #{platformEventId})
+    <selectKey keyProperty="id" keyColumn="id" resultType="int">
+      SELECT LAST_INSERT_ID() as id;
+    </selectKey>
+  </insert>
+
 </mapper>
