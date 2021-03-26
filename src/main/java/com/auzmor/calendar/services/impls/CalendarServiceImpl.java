@@ -105,17 +105,17 @@ public class CalendarServiceImpl implements CalendarService {
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate, null);
     JSONObject guestJson = null;
     System.out.println("Inteviewers Json: " + interviewersJson.toString());
-
-
+    Map<String, Object> result = new HashMap();
     if (gmeet && providerType.equals("gmail")) {
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone);
       try {
-        Thread.sleep(1000);
+        Thread.sleep(500);
       } catch (InterruptedException ie) {
         Thread.currentThread().interrupt();
       }
       if (entryPoint != null && entryPoint.getUri() != null) {
         Map conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
+        result.put("conferencing", conferenceMap);
         guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
         Gson gson = new Gson();
@@ -143,8 +143,8 @@ public class CalendarServiceImpl implements CalendarService {
       calendarDao.saveEvent(event,candidateEvent);
     }
     System.out.println("Guest Json: " + guestJson.toString());
-    Map<String, Object> result = new HashMap();
-    result.put("response", "ok");
+
+    result.put("success", "true");
     return result;
   }
 
@@ -246,6 +246,12 @@ public class CalendarServiceImpl implements CalendarService {
     String organizerToken = applicationContextService.geToken();
     String defaultToken = applicationContextService.getDefaultToken();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(eventId);
+    Map<String, Object> result = new HashMap();
+    if (calendarIdsMap.get("INTERNAL") == null) {
+      result.put("success", "false");
+      result.put("message", "Please try again after 5 minutes. ");
+      return result;
+    }
     String externalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
     String internalEventUrl = UPDATE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
 
@@ -298,8 +304,7 @@ public class CalendarServiceImpl implements CalendarService {
 
 
     calendarDao.updateEvent(eventId, gson.toJson(internalEventData), gson.toJson(externalEventData));
-    Map<String, Object> result = new HashMap();
-    result.put("response", "ok");
+    result.put("success", "true");
     return result;
   }
 
