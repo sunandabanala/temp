@@ -19,6 +19,10 @@
     SELECT id, account_id, google_id, event_details, meet_link, user_id, timezone, platform_event_id FROM google_event where meet_link = #{gmeet}
   </select>
 
+  <select id="getByEventId" parameterType="String" resultMap="GoogleEventMap" >
+    SELECT id, account_id, google_id, event_details, meet_link, user_id, timezone, platform_event_id FROM google_event where platform_event_id = #{eventId}
+  </select>
+
   <insert id="saveGoogleEvent" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO google_event(account_id, meet_link, uuid, google_id, event_details, user_id, timezone, platform_event_id)
     VALUES(#{accountId}, #{meetLink}, #{uuid}, #{googleEventId}, #{eventDetails}, #{userId}, #{timezone}, #{platformEventId})
@@ -26,5 +30,10 @@
       SELECT LAST_INSERT_ID() as id;
     </selectKey>
   </insert>
+
+  <update id='updateGoogleEvent' >
+    UPDATE google_event SET updated_at=CURRENT_TIMESTAMP, event_details=#{eventDetails}, meet_link=#{meetLink}, timezone=#{timezone}
+    where google_id=#{id}
+  </update>
 
 </mapper>
