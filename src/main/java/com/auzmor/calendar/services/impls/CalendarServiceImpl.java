@@ -280,7 +280,8 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
     String externalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("EXTERNAL"));
-    if (calendarIdsMap.get("INTERNAL") == null) {
+    System.out.println("conference:"+conferenceMap);
+    if (calendarIdsMap.get("INTERNAL") == null || (gmeet && (conferenceMap == null || conferenceMap.get("provider") == null || conferenceMap.get("provider").equals("Google Meet") ))) {
       GoogleEvent gEvent = googleEventMapper.getByEventId(eventId);
       Boolean createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, gEvent.getGoogleEventId(), createReq);
