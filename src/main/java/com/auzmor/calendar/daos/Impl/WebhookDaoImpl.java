@@ -219,7 +219,7 @@ public class WebhookDaoImpl implements WebhookDao {
       pEventId = m.group().substring(12);
     }
     if (pEventId != null) {
-      GoogleEvent googleEvent = googleEventMapper.getByGmeet(pEventId);
+      GoogleEvent googleEvent = googleEventMapper.getByEventId(pEventId);
       if (googleEvent != null) {
         Event event = new Event(calendarData.getId(), calendarData.getCalendar_id(), calendarData.getAccount_id(), gson.toJson(calendarData), uuid, ObjectType.EVENT, googleEvent.getPlatformEventId(), EventType.INTERNAL, googleEvent.getTimezone());
         List<Event> events = new ArrayList<>();

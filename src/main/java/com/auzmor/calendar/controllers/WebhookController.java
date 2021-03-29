@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -69,15 +71,18 @@ public class WebhookController {
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
 
-  /*@ApiOperation(value = "Add nylasAccount ")
+ /* @ApiOperation(value = "Add nylasAccount ")
   @RequestMapping(value = "/testConf", method = RequestMethod.GET)
-  public Object testConf(@RequestBody String eventDetails) throws Exception {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    Map map = StringToMap(eventDetails);
-    GoogleCreateEventRequestBody gce = mapper.readValue(eventDetails, GoogleCreateEventRequestBody.class);
-    return gce;
-  }*/
-
+  public Object testConf() throws Exception {
+    String desc = "<strong>Candidate Overview:</strong><br/><br/>Name: Zedd<br/>Email: geetasravanthi18@gmail.com<br/>Interview Kit: hire-dev.auzmor.com/interviews/b84d4ba3105e472585261d1c162dc800 <br/><br/><strong>Note to Candidate:</strong><br/><br/>";
+    String pEventId = null;
+    Pattern p = Pattern.compile("/interviews/"+"[a-zA-Z0-9]{32}");
+    Matcher m = p.matcher(desc);
+    while (m.find()) {
+      pEventId = m.group().substring(12);
+    }
+    return pEventId;
+  }
+*/
 
 }
