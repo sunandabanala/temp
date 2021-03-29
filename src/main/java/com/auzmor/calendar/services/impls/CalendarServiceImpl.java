@@ -12,6 +12,7 @@ import com.auzmor.calendar.models.entities.metadata.ObjectType;
 import com.auzmor.calendar.services.ApplicationContextService;
 import com.auzmor.calendar.services.CalendarService;
 import com.auzmor.calendar.utils.RestTemplateUtil;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -107,7 +108,7 @@ public class CalendarServiceImpl implements CalendarService {
     System.out.println("Inteviewers Json: " + interviewersJson.toString());
     Map<String, Object> result = new HashMap();
     if (gmeet && providerType.equals("gmail")) {
-      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, null, true);
+      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, null, true, null);
       try {
         Thread.sleep(50);
       } catch (InterruptedException ie) {
@@ -281,6 +282,7 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("status", "yes");
     String externalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("EXTERNAL"));
     System.out.println("conference:"+conferenceMap);
+    ConferenceData conferenceData = null;
     if (calendarIdsMap.get("INTERNAL") == null || (gmeet && (conferenceMap == null || conferenceMap.get("provider") == null || conferenceMap.get("provider").equals("Google Meet") ))) {
       String googleEventId = null;
       Boolean createReq = false;
@@ -290,9 +292,14 @@ public class CalendarServiceImpl implements CalendarService {
       } else {
         GoogleEvent gEvent = googleEventMapper.getByEventId(eventId);
         googleEventId = gEvent.getGoogleEventId();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        GoogleCreateEventRequestBody gce = mapper.readValue(gEvent.getEventDetails(), GoogleCreateEventRequestBody.class);
+        conferenceData = gce.getConferenceData();
+        conferenceData.setCreateRequest(null);
         createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
       }
-      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq);
+      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq, conferenceData);
       try {
         Thread.sleep(50);
       } catch (InterruptedException ie) {
@@ -375,7 +382,7 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
 
-  public EntryPoint googleCreateApi(String eventId, String title, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,String location, String email, String refreshToken, String timezone, String googleId, Boolean createReq) throws Exception {
+  public EntryPoint googleCreateApi(String eventId, String title, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,String location, String email, String refreshToken, String timezone, String googleId, Boolean createReq, ConferenceData conferenceData) throws Exception {
     String token = getAccessToken(refreshToken);
     EntryPoint result = new EntryPoint();
     if (token != null) {
@@ -387,6 +394,9 @@ public class CalendarServiceImpl implements CalendarService {
         ConferenceData cf = new ConferenceData();
         cf.setCreateRequest(createRequest);
         gce.setConferenceData(cf);
+      }
+      if (googleId != null && !createReq && conferenceData != null) {
+        gce.setConferenceData(conferenceData);
       }
       gce.setKind("calendar#event");
       gce.setEventType("default");

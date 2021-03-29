@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -23,4 +24,14 @@ public class GoogleCreateEventRequestBody {
   private String eventType;
   private ConferenceData conferenceData;
   private List<Organizer> attendees;
+  private Map reminders;
+  private String hangoutLink;
+  private String iCalUID;
+  private String created;
+  private String updated;
+  private String htmlLink;
+  private String status;
+  private String etag;
+  private String id;
+
 }
