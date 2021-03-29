@@ -282,9 +282,17 @@ public class CalendarServiceImpl implements CalendarService {
     String externalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("EXTERNAL"));
     System.out.println("conference:"+conferenceMap);
     if (calendarIdsMap.get("INTERNAL") == null || (gmeet && (conferenceMap == null || conferenceMap.get("provider") == null || conferenceMap.get("provider").equals("Google Meet") ))) {
-      GoogleEvent gEvent = googleEventMapper.getByEventId(eventId);
-      Boolean createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
-      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, gEvent.getGoogleEventId(), createReq);
+      String googleEventId = null;
+      Boolean createReq = false;
+      if (calendarIdsMap.get("INTERNAL") != null) {
+        googleEventId = getGoogleIdByEventId(eventId, applicationContextService.getProviderRefreshToken(), applicationContextService.getEmail());
+        createReq = true;
+      } else {
+        GoogleEvent gEvent = googleEventMapper.getByEventId(eventId);
+        googleEventId = gEvent.getGoogleEventId();
+        createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
+      }
+      EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq);
       try {
         Thread.sleep(50);
       } catch (InterruptedException ie) {
@@ -469,6 +477,25 @@ public class CalendarServiceImpl implements CalendarService {
     details.put("details", map);
     details.put("provider", "Google Meet");
     return details;
+  }
+
+  private String getGoogleIdByEventId(String eventId, String refreshToken, String email) {
+    String token = getAccessToken(refreshToken);
+    String googleId = null;
+    if (token != null) {
+      String uri = GOOGLE_GET_EVENTS_API.replace("{calendarId}", email);
+      uri = uri+"?q="+eventId;
+      RestTemplate restTemplate = new RestTemplate();
+      HttpHeaders headers = new HttpHeaders();
+      headers.add("Authorization", "Bearer " + token);
+      HttpEntity<Map<String, String>> request = new HttpEntity<>(null, headers);
+      ResponseEntity<?> response = restTemplate.exchange(uri, HttpMethod.GET, request, Map.class);
+      List items = (List)((Map)response.getBody()).get("items");
+      if (items != null && !items.isEmpty()) {
+        googleId = objectToMap(items.get(0)).get("id");
+      }
+    }
+    return googleId;
   }
 
 }
