@@ -10,13 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.List;
 import java.util.stream.Collectors;
+
 
 @RestController
 public class WebhookController {
@@ -69,5 +68,16 @@ public class WebhookController {
     accountService.addNylasAccount(account);
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
+
+  /*@ApiOperation(value = "Add nylasAccount ")
+  @RequestMapping(value = "/testConf", method = RequestMethod.GET)
+  public Object testConf(@RequestBody String eventDetails) throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    Map map = StringToMap(eventDetails);
+    GoogleCreateEventRequestBody gce = mapper.readValue(eventDetails, GoogleCreateEventRequestBody.class);
+    return gce;
+  }*/
+
 
 }

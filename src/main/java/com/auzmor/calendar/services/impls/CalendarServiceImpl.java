@@ -448,10 +448,11 @@ public class CalendarServiceImpl implements CalendarService {
           result.setPin(entryPoint.getPin());
         }
       }
+      Gson gson = new Gson();
       if (googleId != null) {
-        googleEventMapper.updateGoogleEvent(googleId, String.valueOf(map), meetLink, timezone);
+        googleEventMapper.updateGoogleEvent(googleId, gson.toJson(map), meetLink, timezone);
       } else {
-        googleEventMapper.saveGoogleEvent(applicationContextService.getAccountId(), String.valueOf(map.get("id")), String.valueOf(map), meetLink, applicationContextService.getCurrentUserId(), timezone, eventId, requestId);
+        googleEventMapper.saveGoogleEvent(applicationContextService.getAccountId(), String.valueOf(map.get("id")), gson.toJson(map), meetLink, applicationContextService.getCurrentUserId(), timezone, eventId, requestId);
       }
     }
     return result;
