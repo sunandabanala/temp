@@ -48,7 +48,7 @@ public class CalendarController extends Controller {
                                       @RequestBody @Valid EventUpdateRequest request)
     throws Exception {
     return new ResponseEntity<>(calendarService.updateEvent(id, request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(), request.getExternalDescription(),
-      request.getLocation(), request.getExternalLocation(), request.getConferenceMap()),
+      request.getLocation(), request.getExternalLocation(), request.getConferenceMap(), request.getGmeet()),
       HttpStatus.OK);
   }
 

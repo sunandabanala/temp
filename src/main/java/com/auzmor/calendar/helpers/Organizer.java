@@ -12,4 +12,5 @@ import lombok.Setter;
 public class Organizer {
   private String email;
   private String displayName;
+  private Boolean self;
 }

@@ -10,13 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 
 @RestController
 public class WebhookController {
@@ -69,5 +70,19 @@ public class WebhookController {
     accountService.addNylasAccount(account);
     return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
   }
+
+ /* @ApiOperation(value = "Add nylasAccount ")
+  @RequestMapping(value = "/testConf", method = RequestMethod.GET)
+  public Object testConf() throws Exception {
+    String desc = "<strong>Candidate Overview:</strong><br/><br/>Name: Zedd<br/>Email: geetasravanthi18@gmail.com<br/>Interview Kit: hire-dev.auzmor.com/interviews/b84d4ba3105e472585261d1c162dc800 <br/><br/><strong>Note to Candidate:</strong><br/><br/>";
+    String pEventId = null;
+    Pattern p = Pattern.compile("/interviews/"+"[a-zA-Z0-9]{32}");
+    Matcher m = p.matcher(desc);
+    while (m.find()) {
+      pEventId = m.group().substring(12);
+    }
+    return pEventId;
+  }
+*/
 
 }

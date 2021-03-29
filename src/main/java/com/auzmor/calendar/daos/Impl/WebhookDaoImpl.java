@@ -26,6 +26,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.auzmor.calendar.constants.NylasApiConstants.GET_EVENT;
 
@@ -209,7 +211,24 @@ public class WebhookDaoImpl implements WebhookDao {
     Conferencing conferencing = calendarData.getConferencing();
     List<Event> eventList = new ArrayList();
     Set<String> userIds = new HashSet<>();
-    if (conferencing != null && conferencing.getDetails() != null && conferencing.getProvider() != null && conferencing.getProvider().equals("Google Meet") ) {
+    String pEventId = null;
+    String description = calendarData.getDescription();
+    Pattern p = Pattern.compile("/interviews/"+"[a-zA-Z0-9]{32}");
+    Matcher m = p.matcher(description);
+    while (m.find()) {
+      pEventId = m.group().substring(12);
+    }
+    if (pEventId != null) {
+      GoogleEvent googleEvent = googleEventMapper.getByEventId(pEventId);
+      if (googleEvent != null) {
+        Event event = new Event(calendarData.getId(), calendarData.getCalendar_id(), calendarData.getAccount_id(), gson.toJson(calendarData), uuid, ObjectType.EVENT, googleEvent.getPlatformEventId(), EventType.INTERNAL, googleEvent.getTimezone());
+        List<Event> events = new ArrayList<>();
+        events.add(event);
+        calendarMapper.saveEvents(events);
+        accountMapper.updateAccount(googleEvent.getAccountId(), cursorId);
+      }
+    }
+    /*if (conferencing != null && conferencing.getDetails() != null && conferencing.getProvider() != null && conferencing.getProvider().equals("Google Meet") ) {
       String meetlink = String.valueOf(conferencing.getDetails().get("url"));
       GoogleEvent googleEvent = googleEventMapper.getByGmeet(meetlink);
       if (googleEvent != null) {
@@ -219,9 +238,7 @@ public class WebhookDaoImpl implements WebhookDao {
         calendarMapper.saveEvents(events);
         accountMapper.updateAccount(googleEvent.getAccountId(), cursorId);
       }
-        //eventList.add(event);
-        //userIds.add(googleEvent.getAccountId());
-    }
+    }*/
 
   }
 

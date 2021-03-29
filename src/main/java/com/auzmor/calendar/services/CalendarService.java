@@ -16,7 +16,7 @@ public interface CalendarService {
                   final String description, final  String externalDescription, final String location, final String externalLocation, final Boolean gmeet) throws Exception;
 
   Object updateEvent(final String eventId, final String title, final String externalTitle, final String start, final String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds,
-                   final String description, final  String externalDescription, final String location, final String externalLocation, Map conferenceMap) throws JSONException, IOException;
+                   final String description, final  String externalDescription, final String location, final String externalLocation, Map conferenceMap, Boolean gmeet) throws Exception;
 
   Object checkAvailability(String email, final long start, final long end) throws IOException;
 
