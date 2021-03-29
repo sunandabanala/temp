@@ -415,7 +415,7 @@ public class CalendarServiceImpl implements CalendarService {
       HttpMethod method = HttpMethod.POST;
       if (googleId != null) {
         uri = GOOGLE_UPDATE_EVENT_API.replace("{eventId}", googleId);
-        method = HttpMethod.PATCH;
+        method = HttpMethod.PUT;
       }
       uri = uri.replace("{calendarId}", email);
       RestTemplate restTemplate = new RestTemplate();
