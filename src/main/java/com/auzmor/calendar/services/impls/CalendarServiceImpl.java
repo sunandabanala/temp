@@ -283,7 +283,7 @@ public class CalendarServiceImpl implements CalendarService {
     String externalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("EXTERNAL"));
     System.out.println("conference:"+conferenceMap);
     ConferenceData conferenceData = null;
-    if (calendarIdsMap.get("INTERNAL") == null || (gmeet && (conferenceMap == null || conferenceMap.get("provider") == null || conferenceMap.get("provider").equals("Google Meet") ))) {
+    if (calendarIdsMap.get("INTERNAL") == null || (gmeet && (conferenceMap == null || conferenceMap.get("provider") == null || !conferenceMap.get("provider").equals("Google Meet") ) )) {
       String googleEventId = null;
       Boolean createReq = false;
       if (calendarIdsMap.get("INTERNAL") != null) {
@@ -294,10 +294,11 @@ public class CalendarServiceImpl implements CalendarService {
         googleEventId = gEvent.getGoogleEventId();
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
         GoogleCreateEventRequestBody gce = mapper.readValue(gEvent.getEventDetails(), GoogleCreateEventRequestBody.class);
         conferenceData = gce.getConferenceData();
         conferenceData.setCreateRequest(null);
-        createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
+        conferenceData = gmeet ? conferenceData : null;
       }
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq, conferenceData);
       try {
