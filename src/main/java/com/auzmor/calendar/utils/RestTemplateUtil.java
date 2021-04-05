@@ -1,5 +1,9 @@
 package com.auzmor.calendar.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.json.JSONObject;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
@@ -21,5 +25,19 @@ public class RestTemplateUtil {
     }
     HttpEntity<String> request = new HttpEntity<String>(body, headers);
     return restTemplate.exchange(url, method, request, classType);
+  }
+
+  public static Map<String, String> objectToMap(Object object){
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    mapper.registerModule(new JavaTimeModule());
+    return mapper.convertValue(object, Map.class);
+  }
+
+  public static Object mapToObject(Map map, Class cls) {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.registerModule(new JavaTimeModule());
+    return mapper.convertValue(map, cls);
   }
 }

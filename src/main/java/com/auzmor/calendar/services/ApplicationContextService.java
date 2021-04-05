@@ -17,4 +17,10 @@ public interface ApplicationContextService {
   void setDefaultAccountId(String name);
   String getDefaultUserId();
   void setDefaultUserId(String userId);
+  String getProviderType();
+  void setProviderType(String providerType);
+  String getProviderRefreshToken();
+  void setProviderRefreshToken(String refreshToken);
+  String getEmail();
+  void setEmail(String email);
 }

@@ -28,7 +28,9 @@ public class CalendarDaoImpl implements CalendarDao {
   @Override
   public void saveEvent(Event event, Event candidateEvent) {
     List<Event> events = new ArrayList<>();
-    events.add(event);
+    if (event != null) {
+      events.add(event);
+    }
     events.add(candidateEvent);
     calendarMapper.saveEvents(events);
   }
@@ -38,11 +40,13 @@ public class CalendarDaoImpl implements CalendarDao {
     List<Map> updateEvents = new ArrayList<>();
     Map externalEvent = new HashMap();
     Map internalEvent = new HashMap();
-    internalEvent.put("id", id);
-    internalEvent.put("calendarDetails", internalEventData);
+    if (internalEventData != null) {
+      internalEvent.put("id", id);
+      internalEvent.put("calendarDetails", internalEventData);
+      updateEvents.add(internalEvent);
+    }
     externalEvent.put("id", id);
     externalEvent.put("calendarDetails", externalEventData);
-    updateEvents.add(internalEvent);
     updateEvents.add(externalEvent);
     calendarMapper.updateListOfEvent(updateEvents);
   }

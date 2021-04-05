@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -27,5 +28,6 @@ public class CalendarEvent {
   private String status;
   private String id;
   private List<Participant> participants;
+  private Conferencing conferencing;
 
 }
