@@ -52,7 +52,7 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                          String externalDescription, String location, String externalLocation, Boolean gmeet) throws Exception {
+                          String externalDescription, String location, String externalLocation, Boolean gmeet, Map conference, Map extConference) throws Exception {
     String defaultCalendarId;
     String organizerCalendarId;
     String timezone = getTimeZone(start);
@@ -103,7 +103,7 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
 
-    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate, null);
+    JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate, conference);
     JSONObject guestJson = null;
     System.out.println("Inteviewers Json: " + interviewersJson.toString());
     Map<String, Object> result = new HashMap();
@@ -127,7 +127,7 @@ public class CalendarServiceImpl implements CalendarService {
         //updateNylasEvent(organizerToken, defaultUserId, defaultToken)
       }
     } else {
-      guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, null);
+      guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
       updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
 
@@ -238,7 +238,7 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   public Object updateEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                           String externalDescription, String location, String externalLocation, Map conferenceMap, Boolean gmeet) throws Exception {
+                           String externalDescription, String location, String externalLocation, Map conferenceMap, Boolean gmeet, Map extConference) throws Exception {
     String default_calendar_Id;
     String organizer_calendar_Id;
     String userId = applicationContextService.getCurrentUserId();
@@ -251,7 +251,7 @@ public class CalendarServiceImpl implements CalendarService {
     if(defaultToken.equals(organizerToken)) {
       organizer_calendar_Id = getCalendarId(organizerToken);
       default_calendar_Id = organizer_calendar_Id;
-    }else {
+    } else {
       organizer_calendar_Id = getCalendarId(organizerToken);
       default_calendar_Id = getCalendarId(defaultToken);
     }
@@ -320,7 +320,7 @@ public class CalendarServiceImpl implements CalendarService {
 
       String internalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("INTERNAL"));
 
-      JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
+      JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizer_calendar_Id, title, description, location, dummyCandidate, conferenceMap);
 
       ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), internalEventUrl, HttpMethod.PUT, CalendarEvent.class);

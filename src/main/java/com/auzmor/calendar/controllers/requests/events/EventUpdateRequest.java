@@ -58,6 +58,8 @@ public class EventUpdateRequest {
 
   private Map conferenceMap;
 
+  private Map extConf;
+
   private Boolean gmeet;
 
 }

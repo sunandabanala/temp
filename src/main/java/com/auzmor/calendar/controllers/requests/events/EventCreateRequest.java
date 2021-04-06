@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -60,6 +61,10 @@ public class EventCreateRequest {
   private String externalLocation;
 
   private Boolean gmeet;
+
+  private Map conferenceMap;
+
+  private Map extConf;
 
   public Boolean getGmeet() {
     return (this.gmeet != null) ? this.gmeet : false;
