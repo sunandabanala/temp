@@ -102,10 +102,9 @@ public class CalendarServiceImpl implements CalendarService {
     dummyRecruiter.put("email", DUMMY_EMAIL);
     dummyRecruiter.put("name", recruiterName);
     dummyRecruiter.put("status", "yes");
-
     JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizerCalendarId, title, description, location, dummyCandidate, conference);
     JSONObject guestJson = null;
-    System.out.println("Inteviewers Json: " + interviewersJson.toString());
+    //System.out.println("Inteviewers Json: " + interviewersJson.toString());
     Map<String, Object> result = new HashMap();
     if (gmeet && providerType.equals("gmail")) {
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, null, true, null);
@@ -128,6 +127,7 @@ public class CalendarServiceImpl implements CalendarService {
       }
     } else {
       guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
+      System.out.println("Guest json: "+guestJson);
       ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
       updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
 
