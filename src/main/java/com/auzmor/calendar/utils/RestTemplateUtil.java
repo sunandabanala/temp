@@ -23,6 +23,7 @@ public class RestTemplateUtil {
       String base64Creds = java.util.Base64.getEncoder().encodeToString(plainCredsBytes);
       headers.add("Authorization", "Basic " + base64Creds);
     }
+    System.out.println("body: "+body);
     HttpEntity<String> request = new HttpEntity<String>(body, headers);
     return restTemplate.exchange(url, method, request, classType);
   }
