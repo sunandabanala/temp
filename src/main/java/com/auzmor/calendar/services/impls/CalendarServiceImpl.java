@@ -299,9 +299,11 @@ public class CalendarServiceImpl implements CalendarService {
         if (conferenceMap != null && conferenceMap.get("provider") != null ) {
           conferenceData = getConferenceData(conferenceMap);
         }
+        System.out.println("cf 1: "+conferenceData);
         if (gmeet) {
           conferenceData = gce.getConferenceData();
         }
+        System.out.println("cf 2: "+conferenceData);
         if (conferenceData != null) {
           conferenceData.setCreateRequest(null);
         }
