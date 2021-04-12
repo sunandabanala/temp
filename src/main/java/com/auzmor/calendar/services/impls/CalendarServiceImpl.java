@@ -474,16 +474,18 @@ public class CalendarServiceImpl implements CalendarService {
       Map map = (Map) response.getBody();
       if (map.get("conferenceData") != null ) {
         Map conferenceMap = (Map) map.get("conferenceData");
-        List<Map> entryPoints = (List<Map>) conferenceMap.get("entryPoints");
-        String conferenceId = (String) map.get("conferenceId");
-        for (Map entryPointMap : entryPoints) {
-          EntryPoint entryPoint = (EntryPoint) mapToObject(entryPointMap, EntryPoint.class);
-          if (entryPoint.getEntryPointType().equals("video")) {
-            result.setUri(entryPoint.getUri());
-            meetLink = entryPoint.getUri();
-          } else if (entryPoint.getEntryPointType().equals("phone")) {
-            result.setLabel(entryPoint.getLabel());
-            result.setPin(entryPoint.getPin());
+        if (conferenceMap.get("entryPoints") != null ) {
+          List<Map> entryPoints = (List<Map>) conferenceMap.get("entryPoints");
+          String conferenceId = (String) map.get("conferenceId");
+          for (Map entryPointMap : entryPoints) {
+            EntryPoint entryPoint = (EntryPoint) mapToObject(entryPointMap, EntryPoint.class);
+            if (entryPoint.getEntryPointType().equals("video")) {
+              result.setUri(entryPoint.getUri());
+              meetLink = entryPoint.getUri();
+            } else if (entryPoint.getEntryPointType().equals("phone")) {
+              result.setLabel(entryPoint.getLabel());
+              result.setPin(entryPoint.getPin());
+            }
           }
         }
       }
