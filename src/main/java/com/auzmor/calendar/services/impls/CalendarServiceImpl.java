@@ -467,6 +467,7 @@ public class CalendarServiceImpl implements CalendarService {
       headers.add("Authorization", "Bearer " + token);
       HttpEntity<Map<String, String>> request = new HttpEntity<>(objectToMap(gce), headers);
       //ResponseEntity<?> response = restTemplate.postForEntity(uri, request, Map.class);
+      System.out.println("Request body: "+objectToMap(gce));
       ResponseEntity<?> response = restTemplate.exchange(uri, method, request, Map.class);
       System.out.println("response: "+response);
       System.out.println("response body: "+response.getBody());
