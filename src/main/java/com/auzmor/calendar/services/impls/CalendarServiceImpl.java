@@ -302,7 +302,9 @@ public class CalendarServiceImpl implements CalendarService {
         if (gmeet) {
           conferenceData = gce.getConferenceData();
         }
-        conferenceData.setCreateRequest(null);
+        if (conferenceData != null) {
+          conferenceData.setCreateRequest(null);
+        }
         conferenceData = gmeet ? conferenceData : null;
       }
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq, conferenceData);
