@@ -316,9 +316,11 @@ public class CalendarServiceImpl implements CalendarService {
         Thread.currentThread().interrupt();
       }
       if ((conferenceMap == null && !gmeet) || (entryPoint != null && entryPoint.getUri() != null)) {
-        if (entryPoint != null && entryPoint.getUri() != null) {
+        if (gmeet) {
           conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
           result.put("conferencing", conferenceMap);
+        } else {
+          conferenceMap = extConference;
         }
         JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT, CalendarEvent.class);
