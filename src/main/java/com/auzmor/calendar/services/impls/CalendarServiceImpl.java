@@ -355,7 +355,7 @@ public class CalendarServiceImpl implements CalendarService {
       EntryPoint entryPoint = new EntryPoint();
       entryPoint.setEntryPointType("video");
       Map detailsMap = (Map)conferenceMap.get("details");
-      String uri = String.valueOf(detailsMap.get("uri"));
+      String uri = String.valueOf(detailsMap.get("url"));
       entryPoint.setUri(uri);
       entryPoint.setLabel(uri.substring(8));
       entryPoints.add(entryPoint);
