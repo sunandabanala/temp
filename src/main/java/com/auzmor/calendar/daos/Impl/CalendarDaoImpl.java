@@ -46,7 +46,9 @@ public class CalendarDaoImpl implements CalendarDao {
       updateEvents.add(internalEvent);
     }
     externalEvent.put("id", id);
-    externalEvent.put("calendarDetails", externalEventData);
+    if(externalEvent != null){
+      externalEvent.put("calendarDetails", externalEventData);
+    }
     updateEvents.add(externalEvent);
     calendarMapper.updateListOfEvent(updateEvents);
   }
