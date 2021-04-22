@@ -347,6 +347,7 @@ public class CalendarServiceImpl implements CalendarService {
       Gson gson = new Gson();
       CalendarEvent internalEventData = (CalendarEvent) internalResponse.getBody();
       CalendarEvent externalEventData = (CalendarEvent) externalResponse.getBody();
+      System.out.println("externalEventData====="+gson.toJson(externalEventData));
       calendarDao.updateEvent(eventId, gson.toJson(internalEventData), gson.toJson(externalEventData));
     }
     result.put("success", "true");
