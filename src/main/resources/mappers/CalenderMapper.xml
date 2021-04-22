@@ -100,7 +100,7 @@
 
     <update id="updateListOfEvent" parameterType="java.util.List">
         <foreach collection="events" item="event" index="index" separator=";" close=";">
-            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE event_id = #{event.id}
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
         </foreach>
     </update>
 
