@@ -327,6 +327,7 @@ public class CalendarServiceImpl implements CalendarService {
         updateCursorId(defaultToken, organizerToken, defaultUserId, null);
         Gson gson = new Gson();
         CalendarEvent externalEventData = (CalendarEvent)externalResponse.getBody();
+        System.out.println("externalEventData====="+gson.toJson(externalEventData));
         calendarDao.updateEvent(eventId, null, gson.toJson(externalEventData));
       }
     } else {
