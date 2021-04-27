@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -42,7 +43,7 @@ public class EventCreateRequest {
     "    {\n" +
     "      \"email\" : \"abc@gmail.com\""+
     "    }]")
-  private Set<AttendeeRequest> inviteeIds;
+  private Set<EmployeeQueryRequest> inviteeIds;
 
   @ApiModelProperty(notes="All guests for this event", example = "[\"abcd@auzmor.com\"]")
   private Set<String> guestEmails;
@@ -58,5 +59,15 @@ public class EventCreateRequest {
 
   @ApiModelProperty(notes="Title of event", required = true, example = "StandUp")
   private String externalLocation;
+
+  private Boolean gmeet;
+
+  private Map conferenceMap;
+
+  private Map extConf;
+
+  public Boolean getGmeet() {
+    return (this.gmeet != null) ? this.gmeet : false;
+  }
 
 }

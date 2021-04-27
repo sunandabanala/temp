@@ -48,8 +48,11 @@
     <select id='getTokenDataByEmail' parameterType='String' resultType='java.util.HashMap'>
         SELECT
         nylas_token,
+        username,
         uuid,
-        user_id
+        user_id,
+        provider_type,
+        provider_refresh_token
         FROM user_account
         where username=#{email} and is_deleted=0 and is_active =1;
     </select>
@@ -57,8 +60,11 @@
     <select id='getTokenDataByUserId' parameterType='String' resultType='java.util.HashMap'>
         SELECT
         nylas_token,
+        username,
         uuid,
-        user_id
+        user_id,
+        provider_type,
+        provider_refresh_token
         FROM user_account
         where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
@@ -69,6 +75,7 @@
         FROM user_account
         where user_id=#{userId} and is_deleted=0 and is_active =1;
     </select>
+
     <select id="getEventsWithTokens" parameterType="java.util.HashSet" resultMap="EventAccountMap">
             SELECT cd.uuid, cd.object_id, cd.object_type, cd.event_type,
             cd.event_id, cd.calendar_details, cd.account_id,
@@ -93,7 +100,7 @@
 
     <update id="updateListOfEvent" parameterType="java.util.List">
         <foreach collection="events" item="event" index="index" separator=";" close=";">
-            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE event_id = #{event.id}
+            UPDATE calendar_details SET updated_at=CURRENT_TIMESTAMP, calendar_details = #{event.calendarDetails} WHERE object_id = #{event.id}
         </foreach>
     </update>
 
@@ -111,5 +118,13 @@
             UPDATE user_account SET updated_at=CURRENT_TIMESTAMP, cursor_id=#{event.cursorId} where user_id=#{event.userId}
         </foreach>
     </update>
+
+    <select id="getEventIds" parameterType="java.util.HashSet" resultType="String">
+        SELECT object_id FROM calendar_details where object_id in (
+            <foreach item="item" index="index" collection="eventIds" separator=",">
+                #{item}
+            </foreach>
+        )
+    </select>
 </mapper>
 
