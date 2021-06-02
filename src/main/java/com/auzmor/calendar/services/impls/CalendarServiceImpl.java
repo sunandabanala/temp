@@ -2,6 +2,7 @@ package com.auzmor.calendar.services.impls;
 
 import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.controllers.requests.events.EmployeeQueryRequest;
+import com.auzmor.calendar.controllers.requests.events.EmployeeRequest;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.helpers.*;
 import com.auzmor.calendar.mappers.GoogleEventMapper;
@@ -52,7 +53,7 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                          String externalDescription, String location, String externalLocation, Boolean gmeet, Map conference, Map extConference) throws Exception {
+                          String externalDescription, String location, String externalLocation, Boolean gmeet, Map conference, Map extConference, EmployeeRequest employeeRequest) throws Exception {
     String defaultCalendarId;
     String organizerCalendarId;
     String timezone = getTimeZone(start);
@@ -60,7 +61,7 @@ public class CalendarServiceImpl implements CalendarService {
     String accountId = applicationContextService.getAccountId();
     String defaultUserId = applicationContextService.getDefaultUserId();
     String defaultAccountId = applicationContextService.getDefaultAccountId();
-    String recruiterName = applicationContextService.getCurrentUsername();
+    String recruiterName = employeeRequest.getFirstName() + " "+ employeeRequest.getLastName();
     String uuid = UUID.randomUUID().toString().replace("-", "");
     String candidateUUID = UUID.randomUUID().toString().replace("-", "");
 
