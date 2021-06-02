@@ -66,7 +66,7 @@ public class EventCreateRequest {
 
   private Map extConf;
 
-  private EmployeeRequest currentUser;
+  private String currentUser;
 
   public Boolean getGmeet() {
     return (this.gmeet != null) ? this.gmeet : false;
