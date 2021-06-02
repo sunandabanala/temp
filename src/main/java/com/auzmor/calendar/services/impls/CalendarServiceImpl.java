@@ -294,9 +294,18 @@ public class CalendarServiceImpl implements CalendarService {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         createReq = (gEvent.getMeetLink() == null && gmeet) ? true : false;
         GoogleCreateEventRequestBody gce = mapper.readValue(gEvent.getEventDetails(), GoogleCreateEventRequestBody.class);
-        conferenceData = gce.getConferenceData();
-        conferenceData.setCreateRequest(null);
-        conferenceData = gmeet ? conferenceData : null;
+        if (conferenceMap != null && conferenceMap.get("provider") != null ) {
+          conferenceData = getConferenceData(conferenceMap);
+        }
+        System.out.println("cf 1: "+conferenceData);
+        if (gmeet) {
+          conferenceData = gce.getConferenceData();
+        }
+        System.out.println("cf 2: "+conferenceData);
+        if (conferenceData != null) {
+          conferenceData.setCreateRequest(null);
+        }
+        //conferenceData = gmeet ? conferenceData : null;
       }
       EntryPoint entryPoint = googleCreateApi(eventId, title, start, end, guestEmails, attendeeIds, description, location, applicationContextService.getEmail(), applicationContextService.getProviderRefreshToken(), timezone, googleEventId, createReq, conferenceData);
       try {
@@ -304,14 +313,19 @@ public class CalendarServiceImpl implements CalendarService {
       } catch (InterruptedException ie) {
         Thread.currentThread().interrupt();
       }
-      if (entryPoint != null && entryPoint.getUri() != null) {
-        conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
-        result.put("conferencing", conferenceMap);
+      if ((conferenceMap == null && !gmeet) || (entryPoint != null && entryPoint.getUri() != null)) {
+        if (gmeet) {
+          conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
+          result.put("conferencing", conferenceMap);
+        } else {
+          conferenceMap = extConference;
+        }
         JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT, CalendarEvent.class);
         updateCursorId(defaultToken, organizerToken, defaultUserId, null);
         Gson gson = new Gson();
         CalendarEvent externalEventData = (CalendarEvent)externalResponse.getBody();
+        System.out.println("externalEventData====="+gson.toJson(externalEventData));
         calendarDao.updateEvent(eventId, null, gson.toJson(externalEventData));
       }
     } else {
@@ -331,10 +345,35 @@ public class CalendarServiceImpl implements CalendarService {
       Gson gson = new Gson();
       CalendarEvent internalEventData = (CalendarEvent) internalResponse.getBody();
       CalendarEvent externalEventData = (CalendarEvent) externalResponse.getBody();
+      System.out.println("externalEventData====="+gson.toJson(externalEventData));
       calendarDao.updateEvent(eventId, gson.toJson(internalEventData), gson.toJson(externalEventData));
     }
     result.put("success", "true");
     return result;
+  }
+
+  private ConferenceData getConferenceData(Map conferenceMap) {
+    ConferenceData conferenceData = null;
+    if (conferenceMap != null && conferenceMap.get("provider") != null) {
+      List<EntryPoint> entryPoints = new ArrayList<>();
+      EntryPoint entryPoint = new EntryPoint();
+      entryPoint.setEntryPointType("video");
+      Map detailsMap = (Map)conferenceMap.get("details");
+      String uri = String.valueOf(detailsMap.get("url"));
+      entryPoint.setUri(uri);
+      entryPoint.setLabel(uri.substring(8));
+      entryPoints.add(entryPoint);
+      Map conferenceSolution = new HashMap();
+      Map keyMap = new HashMap();
+      conferenceSolution.put("name", conferenceMap.get("provider"));
+      keyMap.put("type", "addOn");
+      conferenceSolution.put("key", keyMap);
+      conferenceData = new ConferenceData();
+      conferenceData.setConferenceSolution(conferenceSolution);
+      conferenceData.setEntryPoints(entryPoints);
+      System.out.println("Conference Data: "+conferenceData);
+    }
+    return conferenceData;
   }
 
   @Override
@@ -411,13 +450,15 @@ public class CalendarServiceImpl implements CalendarService {
       gce.setStart(startObj);
       gce.setEnd(endObj);
       List<Organizer> attendees = new ArrayList();
-      /*for (String mail : guestEmails) {
-        Organizer guest = new Organizer();
-        guest.setDisplayName(mail);
-        guest.setEmail(mail);
-        attendees.add(guest);
+      if (attendeeIds != null) {
+        for (EmployeeQueryRequest attendee : attendeeIds) {
+          Organizer guest = new Organizer();
+          guest.setDisplayName(attendee.getFullName());
+          guest.setEmail(attendee.getEmail());
+          attendees.add(guest);
+        }
+        gce.setAttendees(attendees);
       }
-      gce.setAttendees(attendees);*/
       String meetLink = null;
 
       String uri = GOOGLE_CREATE_EVENT_API;
@@ -432,19 +473,26 @@ public class CalendarServiceImpl implements CalendarService {
       headers.add("Authorization", "Bearer " + token);
       HttpEntity<Map<String, String>> request = new HttpEntity<>(objectToMap(gce), headers);
       //ResponseEntity<?> response = restTemplate.postForEntity(uri, request, Map.class);
+      System.out.println("Request body: "+objectToMap(gce));
       ResponseEntity<?> response = restTemplate.exchange(uri, method, request, Map.class);
+      System.out.println("response: "+response);
+      System.out.println("response body: "+response.getBody());
       Map map = (Map) response.getBody();
-      Map conferenceMap = (Map)map.get("conferenceData");
-      List<Map> entryPoints = (List<Map>)conferenceMap.get("entryPoints");
-      String conferenceId = (String) map.get("conferenceId");
-      for (Map entryPointMap : entryPoints) {
-        EntryPoint entryPoint = (EntryPoint)mapToObject(entryPointMap, EntryPoint.class);
-        if (entryPoint.getEntryPointType().equals("video")) {
-          result.setUri(entryPoint.getUri());
-          meetLink = entryPoint.getUri();
-        } else if (entryPoint.getEntryPointType().equals("phone")) {
-          result.setLabel(entryPoint.getLabel());
-          result.setPin(entryPoint.getPin());
+      if (map.get("conferenceData") != null ) {
+        Map conferenceMap = (Map) map.get("conferenceData");
+        if (conferenceMap.get("entryPoints") != null ) {
+          List<Map> entryPoints = (List<Map>) conferenceMap.get("entryPoints");
+          String conferenceId = (String) map.get("conferenceId");
+          for (Map entryPointMap : entryPoints) {
+            EntryPoint entryPoint = (EntryPoint) mapToObject(entryPointMap, EntryPoint.class);
+            if (entryPoint.getEntryPointType().equals("video")) {
+              result.setUri(entryPoint.getUri());
+              meetLink = entryPoint.getUri();
+            } else if (entryPoint.getEntryPointType().equals("phone")) {
+              result.setLabel(entryPoint.getLabel());
+              result.setPin(entryPoint.getPin());
+            }
+          }
         }
       }
       Gson gson = new Gson();
