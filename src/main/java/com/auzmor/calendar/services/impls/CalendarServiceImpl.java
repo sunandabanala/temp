@@ -114,6 +114,7 @@ public class CalendarServiceImpl implements CalendarService {
       if (entryPoint != null && entryPoint.getUri() != null) {
         Map conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
         result.put("conferencing", conferenceMap);
+        externalLocation = entryPoint.getUri();
         guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
         Gson gson = new Gson();
@@ -124,6 +125,9 @@ public class CalendarServiceImpl implements CalendarService {
         //updateNylasEvent(organizerToken, defaultUserId, defaultToken)
       }
     } else {
+      if (extConference != null && extConference.get("details") != null && (((Map)extConference.get("details")).get("url") != null )) {
+        externalLocation = ((Map)extConference.get("details")).get("url").toString();
+      }
       guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       System.out.println("Guest json: "+guestJson);
       ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
@@ -320,6 +324,9 @@ public class CalendarServiceImpl implements CalendarService {
         } else {
           conferenceMap = extConference;
         }
+        if (conferenceMap != null && conferenceMap.get("details") != null && (((Map)conferenceMap.get("details")).get("url") != null )) {
+          externalLocation = ((Map)conferenceMap.get("details")).get("url").toString();
+        }
         JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT, CalendarEvent.class);
         updateCursorId(defaultToken, organizerToken, defaultUserId, null);
@@ -331,7 +338,9 @@ public class CalendarServiceImpl implements CalendarService {
     } else {
 
       String internalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("INTERNAL"));
-
+      if (extConference != null && extConference.get("details") != null && (((Map)extConference.get("details")).get("url") != null )) {
+        externalLocation = ((Map)extConference.get("details")).get("url").toString();
+      }
       JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizer_calendar_Id, title, description, location, dummyCandidate, conferenceMap);
 
