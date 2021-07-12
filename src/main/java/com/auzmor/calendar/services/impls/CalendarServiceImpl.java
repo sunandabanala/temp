@@ -538,11 +538,15 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   private Map conferenceMap(String pin, String phone, String uri) {
-    Set<String> phones = new HashSet<>();
-    phones.add(phone);
     Map map = new HashMap();
-    map.put("pin", pin);
-    map.put("phone", phones);
+    if (phone != null) {
+      Set<String> phones = new HashSet<>();
+      phones.add(phone);
+      map.put("phone", phones);
+    }
+    if (pin != null) {
+      map.put("pin", pin);
+    }
     map.put("url", uri);
     Map details = new HashMap();
     details.put("details", map);
