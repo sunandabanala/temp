@@ -36,7 +36,7 @@ public class CalendarController extends Controller {
   public ResponseEntity<Object> create(@Valid @RequestBody EventCreateRequest request)
     throws Exception {
     return new ResponseEntity<>(calendarService.saveEvent(request.getEventId(), request.getTitle(), request.getExternalTitle(), request.getStart(), request.getEnd(), request.getGuestEmails(), request.getInviteeIds(), request.getDescription(),
-      request.getExternalDescription(), request.getLocation(), request.getExternalLocation(), request.getGmeet(), request.getConferenceMap(), request.getExtConf()),
+      request.getExternalDescription(), request.getLocation(), request.getExternalLocation(), request.getGmeet(), request.getConferenceMap(), request.getExtConf(), request.getCurrentUser()),
       HttpStatus.CREATED);
   }
 

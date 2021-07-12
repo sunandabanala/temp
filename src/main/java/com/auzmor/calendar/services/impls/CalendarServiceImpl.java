@@ -1,6 +1,5 @@
 package com.auzmor.calendar.services.impls;
 
-import com.auzmor.calendar.controllers.requests.events.AttendeeRequest;
 import com.auzmor.calendar.controllers.requests.events.EmployeeQueryRequest;
 import com.auzmor.calendar.daos.CalendarDao;
 import com.auzmor.calendar.helpers.*;
@@ -16,7 +15,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -52,7 +50,7 @@ public class CalendarServiceImpl implements CalendarService {
 
   @Override
   public Object saveEvent(String eventId, String title, String externalTitle, String start, String end, final Set<String> guestEmails, final Set<EmployeeQueryRequest> attendeeIds, String description,
-                          String externalDescription, String location, String externalLocation, Boolean gmeet, Map conference, Map extConference) throws Exception {
+                          String externalDescription, String location, String externalLocation, Boolean gmeet, Map conference, Map extConference, String currentUsername) throws Exception {
     String defaultCalendarId;
     String organizerCalendarId;
     String timezone = getTimeZone(start);
@@ -60,7 +58,7 @@ public class CalendarServiceImpl implements CalendarService {
     String accountId = applicationContextService.getAccountId();
     String defaultUserId = applicationContextService.getDefaultUserId();
     String defaultAccountId = applicationContextService.getDefaultAccountId();
-    String recruiterName = applicationContextService.getCurrentUsername();
+    String recruiterName = currentUsername;
     String uuid = UUID.randomUUID().toString().replace("-", "");
     String candidateUUID = UUID.randomUUID().toString().replace("-", "");
 
@@ -116,6 +114,8 @@ public class CalendarServiceImpl implements CalendarService {
       if (entryPoint != null && entryPoint.getUri() != null) {
         Map conferenceMap = conferenceMap(entryPoint.getPin(), entryPoint.getLabel(), entryPoint.getUri());
         result.put("conferencing", conferenceMap);
+        externalLocation = entryPoint.getUri();
+        externalDescription = !externalDescription.isBlank() ? externalDescription + "\nJoin Meeting - " + externalLocation : "Join Meeting - " + externalLocation;
         guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> candidateResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
         Gson gson = new Gson();
@@ -126,6 +126,10 @@ public class CalendarServiceImpl implements CalendarService {
         //updateNylasEvent(organizerToken, defaultUserId, defaultToken)
       }
     } else {
+      if (extConference != null && extConference.get("details") != null && (((Map)extConference.get("details")).get("url") != null )) {
+        externalLocation = ((Map)extConference.get("details")).get("url").toString();
+        externalDescription = !externalDescription.isBlank() ? externalDescription + "\nJoin Meeting - " + externalLocation : "Join Meeting - " + externalLocation;
+      }
       guestJson = calendardataJson(null, guestEmails, start, end, defaultCalendarId, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       System.out.println("Guest json: "+guestJson);
       ResponseEntity<?> response = RestTemplateUtil.restTemplateUtil(organizerToken, interviewersJson.toString(), CREATE_EVENT, HttpMethod.POST, CalendarEvent.class);
@@ -322,6 +326,10 @@ public class CalendarServiceImpl implements CalendarService {
         } else {
           conferenceMap = extConference;
         }
+        if (conferenceMap != null && conferenceMap.get("details") != null && (((Map)conferenceMap.get("details")).get("url") != null )) {
+          externalLocation = ((Map)conferenceMap.get("details")).get("url").toString();
+          externalDescription = !externalDescription.isBlank() ? externalDescription + "\nJoin Meeting - " + externalLocation : "Join Meeting - " + externalLocation;
+        }
         JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, conferenceMap);
         ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, guestJson.toString(), externalEventUrl, HttpMethod.PUT, CalendarEvent.class);
         updateCursorId(defaultToken, organizerToken, defaultUserId, null);
@@ -333,7 +341,10 @@ public class CalendarServiceImpl implements CalendarService {
     } else {
 
       String internalEventUrl = UPDATE_EVENT.replace("{id}", calendarIdsMap.get("INTERNAL"));
-
+      if (extConference != null && extConference.get("details") != null && (((Map)extConference.get("details")).get("url") != null )) {
+        externalLocation = ((Map)extConference.get("details")).get("url").toString();
+        externalDescription = !externalDescription.isBlank() ? externalDescription + "\nJoin Meeting - " + externalLocation : "Join Meeting - " + externalLocation;
+      }
       JSONObject guestJson = calendardataJson(null, guestEmails, start, end, default_calendar_Id, externalTitle, externalDescription, externalLocation, dummyRecruiter, extConference);
       JSONObject interviewersJson = calendardataJson(attendeeEmailList, null, start, end, organizer_calendar_Id, title, description, location, dummyCandidate, conferenceMap);
 
@@ -527,11 +538,15 @@ public class CalendarServiceImpl implements CalendarService {
   }
 
   private Map conferenceMap(String pin, String phone, String uri) {
-    Set<String> phones = new HashSet<>();
-    phones.add(phone);
     Map map = new HashMap();
-    map.put("pin", pin);
-    map.put("phone", phones);
+    if (phone != null) {
+      Set<String> phones = new HashSet<>();
+      phones.add(phone);
+      map.put("phone", phones);
+    }
+    if (pin != null) {
+      map.put("pin", pin);
+    }
     map.put("url", uri);
     Map details = new HashMap();
     details.put("details", map);
