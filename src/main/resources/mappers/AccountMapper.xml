@@ -27,7 +27,7 @@
   <insert id="saveUserAccount" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO user_account(username, provider_type, user_id, provider_refresh_token, nylas_token, nylas_account_id, cursor_id, uuid)
     VALUES(#{userAccount.username}, #{userAccount.providerType}, #{userAccount.userId}, #{userAccount.refreshToken}, #{userAccount.nylasToken}, #{userAccount.nylasAccountId}, #{userAccount.cursorId}, #{userAccount.uuid})
-    ON DUPLICATE KEY UPDATE user_id = #{userAccount.userId}, is_active=1
+    ON DUPLICATE KEY UPDATE user_id = #{userAccount.userId}, nylas_token=#{userAccount.nylasToken}, is_active=1
     <selectKey keyProperty="id" keyColumn="id" resultType="int">
       SELECT LAST_INSERT_ID() as id;
     </selectKey>
