@@ -417,18 +417,32 @@ public class CalendarServiceImpl implements CalendarService {
     String userId = applicationContextService.getCurrentUserId();
     Map<String, String> calendarIdsMap = calendarDao.mapEvent(id);
     String defaultUserId = applicationContextService.getDefaultUserId();
-    String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
-    String internalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
-
     String organizerToken = applicationContextService.geToken();
     String defaultToken = applicationContextService.getDefaultToken();
-
-    ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, null, internalEventUrl, HttpMethod.DELETE, String.class);
-    updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+    if (calendarIdsMap.get("INTERNAL") != null) {
+      String internalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("INTERNAL"));
+      ResponseEntity<?> internalResponse = RestTemplateUtil.restTemplateUtil(organizerToken, null, internalEventUrl, HttpMethod.DELETE, String.class);
+      System.out.println("response organizaer"+internalResponse);
+      updateCursorId(defaultToken, organizerToken, defaultUserId, userId);
+    } else {
+      GoogleEvent gEvent = googleEventMapper.getByEventId(id);
+      String googleEventId = gEvent.getGoogleEventId();
+      String internalEventUrl = GOOGLE_DELETE_EVENT_API.replace("{calendarId}", applicationContextService.getEmail());
+      internalEventUrl = internalEventUrl.replace("{eventId}", googleEventId);
+      RestTemplate restTemplate = new RestTemplate();
+      HttpHeaders headers = new HttpHeaders();
+      String token = getAccessToken(applicationContextService.getProviderRefreshToken());
+      headers.add("Authorization", "Bearer " + token);
+      HttpEntity<Map<String, String>> request = new HttpEntity<>(null, headers);
+      System.out.println("internal event url: "+internalEventUrl);
+      ResponseEntity<?> response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, Map.class);
+      System.out.println("response organizaer"+response);
+    }
+    String externalEventUrl = DELETE_EVENT.replace("{id}",calendarIdsMap.get("EXTERNAL"));
 
     ResponseEntity<?> externalResponse = RestTemplateUtil.restTemplateUtil(defaultToken, null, externalEventUrl, HttpMethod.DELETE, String.class);
     updateCursorId(defaultToken, organizerToken, defaultUserId, null);
-
+    System.out.println("response organizaer"+externalResponse);
     calendarDao.deleteEvent(id);
   }
 
