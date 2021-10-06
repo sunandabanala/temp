@@ -434,6 +434,7 @@ public class CalendarServiceImpl implements CalendarService {
       String token = getAccessToken(applicationContextService.getProviderRefreshToken());
       headers.add("Authorization", "Bearer " + token);
       HttpEntity<Map<String, String>> request = new HttpEntity<>(null, headers);
+      System.out.println("internal event url: "+internalEventUrl);
       ResponseEntity<?> response = restTemplate.exchange(internalEventUrl, HttpMethod.DELETE, request, Map.class);
       System.out.println("response organizaer"+response);
     }
