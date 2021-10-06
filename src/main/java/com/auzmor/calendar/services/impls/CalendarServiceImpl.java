@@ -427,8 +427,8 @@ public class CalendarServiceImpl implements CalendarService {
     } else {
       GoogleEvent gEvent = googleEventMapper.getByEventId(id);
       String googleEventId = gEvent.getGoogleEventId();
-      String internalEventUrl = GOOGLE_DELETE_EVENT_API.replace("{eventId}", googleEventId);
-      internalEventUrl = GOOGLE_DELETE_EVENT_API.replace("{calendarId}", applicationContextService.getEmail());
+      String internalEventUrl = GOOGLE_DELETE_EVENT_API.replace("{calendarId}", applicationContextService.getEmail());
+      internalEventUrl = internalEventUrl.replace("{eventId}", googleEventId);
       RestTemplate restTemplate = new RestTemplate();
       HttpHeaders headers = new HttpHeaders();
       String token = getAccessToken(applicationContextService.getProviderRefreshToken());
